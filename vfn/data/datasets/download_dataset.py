@@ -12,9 +12,9 @@ from tqdm import tqdm
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Download the dataset into a specific folder.')
-    parser.add_argument('-d', '--data_root', default='datasets/Flickr_21K/', type=str,
+    parser.add_argument('-d', '--data_root', default='datasets/data/FlickrImageCrop/', type=str,
                         help='the path to the dataset')
-    parser.add_argument('-p', '--pkl_path', default='datasets/db_21K.pkl', type=str,
+    parser.add_argument('-p', '--pkl_path', default='datasets/data/db_21K.pkl', type=str,
                         help='the path to the `db_21K.pkl` file')
     parser.add_argument('-w', '--num_workers', default=mp.cpu_count(), type=int,
                         help='the number of workers that download dataset with multiprocessing')
@@ -54,3 +54,4 @@ if __name__ == '__main__':
                           desc=f'Downloading with {args.num_workers} worker(s)...', ascii=True):
                 pbar.update()
 
+# TODO: issue: the downloaded file is larger than original's
