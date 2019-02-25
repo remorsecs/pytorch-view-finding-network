@@ -33,6 +33,7 @@ class TestDownloadAnImage(TestCase):
             Image.open('test_' + filename).convert('RGB'),
         ]
         try:
+            # Ref: http://effbot.org/zone/pil-comparing-images.htm
             self.assertIsNone(ImageChops.difference(*images).getbbox())
         finally:
             os.remove(full_path)
