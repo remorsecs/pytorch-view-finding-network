@@ -1,0 +1,19 @@
+---
+train:
+  optimizer:
+    - class: 'SGD',
+      lr: 1e-3,
+      momentum: 0.9,
+  lr_scheduler:
+    - class: 'StepLR',
+      step_size: 10,
+      gamma: 0.1,
+  criterion:  # need design
+    - class: ''
+  dataloader:
+    - batch_size: 100,
+      shuffle: True,
+  device:
+    id: [0, 1, 2, 3]  # or 'cpu'
+
+
