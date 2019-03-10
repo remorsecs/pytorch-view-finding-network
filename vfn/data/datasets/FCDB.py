@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
+import cv2
 import json
 from torch.utils.data import Dataset
 from tqdm import trange
@@ -28,14 +29,14 @@ class FCDB(Dataset):
         if download:
             self._download(root_dir)
 
-        self.img_list, self.annotations = self._fetch_metadata()
+        self.img_list, self.img_sizes, self.annotations = self._fetch_metadata()
         self._check_integrity(root_dir)
 
     def __len__(self):
         return len(self.img_list)
 
     def __getitem__(self, index):
-        return self.img_list[index], self.annotations[index]
+        return self.img_list[index], self.img_sizes[index], self.annotations[index]
 
     def _download(self, root_dir):
         if not os.path.isdir(root_dir):
@@ -49,7 +50,7 @@ class FCDB(Dataset):
             urlretrieve(anno_url, self.meta_file)
             print('Done')
 
-        # collect URLs and pass to ImageDownloader
+        # TODO: collect URLs and pass to ImageDownloader
         # filter out unavailable images and save to new meta file
 
     def _fetch_metadata(self):
@@ -57,13 +58,16 @@ class FCDB(Dataset):
 
         print('Reading metadata...')
         db = json.load(open(self.meta_file, 'r'))
-        img_list, annotations = [], []
+        img_list, img_sizes, annotations = [], [], []
         for i in trange(len(db)):
             img_list.append(os.path.basename(db[i]['url']))
             annotations.append(db[i]['crop'])
+            # print(os.path.join(self.root_dir, img_list[-1]))
+            height, width = cv2.imread(os.path.join(self.root_dir, img_list[-1])).shape[:2]
+            img_sizes.append((width, height))
         print('Unpacked', len(db), 'records.')
 
-        return img_list, annotations
+        return img_list, img_sizes, annotations
 
     def _check_integrity(self, root_dir):
         pass
@@ -71,11 +75,12 @@ class FCDB(Dataset):
 
 if __name__ == "__main__":
     db = FCDB("../../../FCDB")
-    ground_truth = []
+    ground_truth, img_sizes = [], []
     for i in range(len(db)):
-        filename, crop = db[i]
+        filename, size, crop = db[i]
         ground_truth.append(crop)
+        img_sizes.append(size)
 
     evaluator = ImageCropperEvaluator()
     # evaluate ground truth, this should get perfect results
-    evaluator.evaluate(ground_truth, ground_truth)
+    evaluator.evaluate(ground_truth, ground_truth, img_sizes)
