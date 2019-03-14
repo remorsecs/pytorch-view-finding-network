@@ -4,15 +4,10 @@ from __future__ import print_function
 import os
 import cv2
 import json
-from torch.utils.data import Dataset
 from tqdm import trange
-from image_cropper_evaluator import ImageCropperEvaluator
-
-import sys
-if sys.version_info[0] == 3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
+from torch.utils.data import Dataset
+from ioutils import download
+from evaluation import ImageCropperEvaluator
 
 
 class FCDB(Dataset):
@@ -21,10 +16,10 @@ class FCDB(Dataset):
     def __init__(self, root_dir, subset='test', download=True):
         super(FCDB, self).__init__()
         assert subset in ['train', 'test', 'all'], 'Unknown subset {}' % subset
+        # TODO: handle 'train' and 'all' options
 
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
-        print(self.meta_file)
 
         if download:
             self._download(root_dir)
@@ -47,8 +42,8 @@ class FCDB(Dataset):
             print('Downloading FCDB annotation file...')
             anno_url = \
                 'https://raw.githubusercontent.com/yiling-chen/flickr-cropping-dataset/master/cropping_testing_set.json'
-            urlretrieve(anno_url, self.meta_file)
-            print('Done')
+            download(anno_url, self.meta_file)
+            print()
 
         # TODO: collect URLs and pass to ImageDownloader
         # filter out unavailable images and save to new meta file
@@ -62,7 +57,6 @@ class FCDB(Dataset):
         for i in trange(len(db)):
             img_list.append(os.path.basename(db[i]['url']))
             annotations.append(db[i]['crop'])
-            # print(os.path.join(self.root_dir, img_list[-1]))
             height, width = cv2.imread(os.path.join(self.root_dir, img_list[-1])).shape[:2]
             img_sizes.append((width, height))
         print('Unpacked', len(db), 'records.')
