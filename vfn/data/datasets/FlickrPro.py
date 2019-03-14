@@ -3,18 +3,12 @@ from __future__ import print_function
 
 import os
 import pickle
-import random
 
 from PIL import Image
 from torch.utils.data import Dataset
 from tqdm import trange
 from vfn.data.datasets.image_downloader import ImageDownloader
-
-import sys
-if sys.version_info[0] == 3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
+from vfn.data.datasets.ioutils import download
 
 
 class FlickrPro(Dataset):
@@ -44,18 +38,14 @@ class FlickrPro(Dataset):
     def __getitem__(self, index):
         img_file = os.path.join(self.root_dir, self.img_list[index])
         image_raw = Image.open(img_file).convert('RGB')
-        crop_idx = random.randint(0, 13)
-        x, y, w, h = self.annotations[index][crop_idx]
+        x, y, w, h = self.annotations[index]
         image_crop = image_raw.crop((x, y, x+w, y+h))
 
         if self.transforms:
             image_raw = self.transforms(image_raw)
             image_crop = self.transforms(image_crop)
 
-        return dict(
-            image=image_raw,
-            crop=image_crop,
-        )
+        return image_raw, image_crop
 
     def _download_metadata(self):
         if not os.path.isdir(self.root_dir):
@@ -63,9 +53,9 @@ class FlickrPro(Dataset):
 
         # download dataset.pkl to root_dir
         if not os.path.exists(self.meta_file):
-            print('Downloading dataset.pkl...')
+            print('Downloading FlickrPro...')
             pkl_url = 'https://raw.githubusercontent.com/yiling-chen/view-finding-network/master/dataset.pkl'
-            urlretrieve(pkl_url, self.meta_file)
+            download(pkl_url, self.meta_file)
             print('Done')
 
     def _download_images(self):
@@ -84,10 +74,10 @@ class FlickrPro(Dataset):
         for i in trange(len(db)):
             if (i % 14) == 0:
                 urls.append(db[i]['url'])
-                img_list.append(os.path.basename(db[i]['url']))
-                annotations.append([])
 
-            annotations[i // 14].append(db[i]['crop'])
+            img_list.append(os.path.basename(db[i]['url']))
+            annotations.append(db[i]['crop'])
+
         print('Unpacked', len(db), 'records.')
 
         return img_list, annotations, urls
