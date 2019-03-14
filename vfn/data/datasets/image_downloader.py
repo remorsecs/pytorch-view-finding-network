@@ -23,5 +23,7 @@ class ImageDownloader(object):
             url = self.image_urls[i]
             filename = os.path.basename(url)
             filepath = os.path.join(self.root_dir, filename)
-            with open(filepath, 'wb') as image_file:
-                image_file.write(self._read_image(url))
+
+            if not os.path.exists(filepath):
+                with open(filepath, 'wb') as image_file:
+                    image_file.write(self._read_image(url))
