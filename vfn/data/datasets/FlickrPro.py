@@ -44,7 +44,8 @@ class FlickrPro(Dataset):
     def __getitem__(self, index):
         img_file = os.path.join(self.root_dir, self.img_list[index])
         image_raw = Image.open(img_file).convert('RGB')
-        x, y, w, h = self.annotations[index]
+        crop_idx = random.randint(0, 13)
+        x, y, w, h = self.annotations[index][crop_idx]
         image_crop = image_raw.crop((x, y, x+w, y+h))
 
         if self.transforms:
@@ -83,9 +84,10 @@ class FlickrPro(Dataset):
         for i in trange(len(db)):
             if (i % 14) == 0:
                 urls.append(db[i]['url'])
+                img_list.append(os.path.basename(db[i]['url']))
+                annotations.append([])
 
-            img_list.append(os.path.basename(db[i]['url']))
-            annotations.append(db[i]['crop'])
+            annotations[i // 14].append(db[i]['crop'])
         print('Unpacked', len(db), 'records.')
 
         return img_list, annotations, urls
