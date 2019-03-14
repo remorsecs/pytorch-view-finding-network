@@ -20,12 +20,13 @@ else:
 class FlickrPro(Dataset):
     __meta_name = 'flickr_pro.pkl'
 
-    def __init__(self, root_dir, download=True, transform=None, ):
+    def __init__(self, root_dir, download=True, transforms=None, ):
         super(FlickrPro, self).__init__()
         random.seed()
 
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
+        self.transforms = transforms
 
         if download:
             self._download_metadata()
@@ -42,10 +43,17 @@ class FlickrPro(Dataset):
 
     def __getitem__(self, index):
         img_file = os.path.join(self.root_dir, self.img_list[index])
-        img = Image.open(img_file).convert('RGB')
+        image_raw = Image.open(img_file).convert('RGB')
+        x, y, w, h = self.annotations[index]
+        image_crop = image_raw.crop((x, y, x+w, y+h))
+
+        if self.transforms:
+            image_raw = self.transforms(image_raw)
+            image_crop = self.transforms(image_crop)
+
         return dict(
-            image=img,
-            crop=self.annotations[index],
+            image=image_raw,
+            crop=image_crop,
         )
 
     def _download_metadata(self):
