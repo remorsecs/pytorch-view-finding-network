@@ -5,12 +5,7 @@ import os
 import pickle
 from torch.utils.data import Dataset
 from tqdm import trange
-
-import sys
-if sys.version_info[0] == 3:
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
+from ioutils import download
 
 
 class FlickrPro(Dataset):
@@ -32,9 +27,8 @@ class FlickrPro(Dataset):
         return len(self.img_list)
 
     def __getitem__(self, index):
-        pass
+        return self.img_list[index], self.annotations[index]
 
-    # TODO: write the download code
     def _download(self, root_dir):
         if not os.path.isdir(root_dir):
             os.makedirs(root_dir)
@@ -43,10 +37,10 @@ class FlickrPro(Dataset):
         if not os.path.exists(self.meta_file):
             print('Downloading FlickrPro...')
             pkl_url = 'https://raw.githubusercontent.com/yiling-chen/view-finding-network/master/dataset.pkl'
-            urlretrieve(pkl_url, self.meta_file)
-            print('Done')
+            download(pkl_url, self.meta_file)
+            print()
 
-        # collect URLs and pass to ImageDownloader
+        # TODO: collect URLs and pass to ImageDownloader
 
     def _fetch_metadata(self):
         assert os.path.isfile(self.meta_file), "Metadata does not exist! Please download the FlickrPro dataset first!"
@@ -67,3 +61,4 @@ class FlickrPro(Dataset):
 
 if __name__ == "__main__":
     flickr_pro = FlickrPro("../../../raw_images")
+    print(flickr_pro[0])
