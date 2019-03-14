@@ -12,9 +12,9 @@ from tqdm import tqdm
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Download the dataset into a specific folder.')
-    parser.add_argument('-d', '--data_root', default='datasets/data/FlickrImageCrop/', type=str,
+    parser.add_argument('-d', '--data_root', default='raw_images/flickr_pro/', type=str,
                         help='the path to the dataset')
-    parser.add_argument('-p', '--pkl_path', default='datasets/data/db_21K.pkl', type=str,
+    parser.add_argument('-p', '--pkl_path', default='raw_images/flickr_pro.pkl', type=str,
                         help='the path to the `db_21K.pkl` file')
     parser.add_argument('-w', '--num_workers', default=mp.cpu_count(), type=int,
                         help='the number of workers that download dataset with multiprocessing')
@@ -47,11 +47,10 @@ if __name__ == '__main__':
     urls = [db[i]['url'] for i in range(0, len(db), 14)]
 
     freeze_support()
-    with Pool(args.num_workers) as pool:
+    with Pool() as pool:
         with tqdm(total=len(db) // 14) as pbar:
             download_an_image_by_url = functools.partial(download_an_image, args.data_root)
             for _ in tqdm(pool.imap_unordered(download_an_image_by_url, urls),
                           desc=f'Downloading with {args.num_workers} worker(s)...', ascii=True):
                 pbar.update()
 
-# TODO: issue: the downloaded file is larger than original's
