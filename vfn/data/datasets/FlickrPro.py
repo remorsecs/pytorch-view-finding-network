@@ -16,7 +16,6 @@ class FlickrPro(Dataset):
 
     def __init__(self, root_dir, download=True, transforms=None, ):
         super(FlickrPro, self).__init__()
-        random.seed()
 
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
@@ -88,3 +87,4 @@ class FlickrPro(Dataset):
 
 if __name__ == "__main__":
     flickr_pro = FlickrPro("../../../raw_images")
+    print(flickr_pro[0])
