@@ -14,7 +14,7 @@ from vfn.data.datasets.ioutils import download
 class FlickrPro(Dataset):
     __meta_name = 'flickr_pro.pkl'
 
-    def __init__(self, root_dir, download=True, transforms=None, ):
+    def __init__(self, root_dir, download=True, transforms=None, is_train=True):
         super(FlickrPro, self).__init__()
 
         self.root_dir = root_dir
@@ -39,6 +39,10 @@ class FlickrPro(Dataset):
         image_raw = Image.open(img_file).convert('RGB')
         x, y, w, h = self.annotations[index]
         image_crop = image_raw.crop((x, y, x+w, y+h))
+
+        # resize
+        image_raw = image_raw.resize((227, 227))
+        image_crop = image_crop.resize((227, 227))
 
         if self.transforms:
             image_raw = self.transforms(image_raw)
