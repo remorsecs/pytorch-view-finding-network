@@ -6,6 +6,7 @@ import urllib.request
 from tqdm import trange
 
 
+# deprecated?
 class ImageDownloader(object):
     def __init__(self, root_dir, image_urls):
         super(ImageDownloader, self).__init__()
@@ -27,3 +28,18 @@ class ImageDownloader(object):
             if not os.path.exists(filepath):
                 with open(filepath, 'wb') as image_file:
                     image_file.write(self._read_image(url))
+
+
+def download(root_dir, image_urls):
+    def _read_image(_url):
+        with urllib.request.urlopen(_url) as response:
+            return response.read()
+
+    for i in trange(len(image_urls), ascii=True):
+        url = image_urls[i]
+        filename = os.path.basename(url)
+        filepath = os.path.join(root_dir, filename)
+
+        if not os.path.exists(filepath):
+            with open(filepath, 'wb') as image_file:
+                image_file.write(_read_image(url))
