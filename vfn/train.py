@@ -39,8 +39,9 @@ def run():
     LR = kwargs['learning_rate']
     MOMENTUM = kwargs['momentum']
     RANKING_LOSS = kwargs['ranking_loss']
+    GPU_ID = kwargs['gpu_id']
 
-    device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda:{}'.format(GPU_ID) if torch.cuda.is_available() else 'cpu'
     backbone = backbones.AlexNet()  # type: backbones.Backbone
     batch = dict(
         train_batch_size=BATCH_TRAIN,
@@ -147,5 +148,6 @@ if __name__ == '__main__':
         momentum=0.9,
         ranking_loss='ranknet',
         root_dir='../raw_images/flickr_pro',
+        gpu_id=0,
     )
     run()
