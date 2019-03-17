@@ -6,8 +6,8 @@ import cv2
 import json
 from tqdm import trange
 from torch.utils.data import Dataset
-from ioutils import download
-from evaluation import ImageCropperEvaluator
+from vfn.data.datasets.ioutils import download
+from vfn.data.datasets.evaluation import ImageCropperEvaluator
 
 
 class FCDB(Dataset):

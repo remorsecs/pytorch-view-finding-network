@@ -1,0 +1,7 @@
+torch>=1.0
+pytorch-ignite
+pytest
+tqdm
+scikit-learn
+pyyaml
+opencv-python

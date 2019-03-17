@@ -15,7 +15,7 @@ class ViewFindingNet(nn.Module):
             nn.ReLU(True),
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(self.backbone.output_dim(), 1),
+            nn.Linear(1000, 1),
         )
 
     def forward(self, image):
