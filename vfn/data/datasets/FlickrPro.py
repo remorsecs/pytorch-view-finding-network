@@ -63,7 +63,7 @@ class FlickrPro(Dataset):
 
     def _download_images(self):
         print('Downloading FlickrPro images...')
-        ImageDownloader(self.root_dir, self.urls).download()
+        ImageDownloader.download(self.root_dir, self.urls)
         print('Done')
 
     def _fetch_metadata(self):
