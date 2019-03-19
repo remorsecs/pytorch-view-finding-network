@@ -1,3 +1,5 @@
+import json
+import os
 import torch
 import torch.cuda
 import torch.optim as optim
@@ -16,7 +18,7 @@ from vfn.data.datasets.FlickrPro import FlickrPro
 
 def get_data_loaders(train_batch_size, val_batch_size, input_dim, train_size):
     data_transform = transforms.Compose([
-        transforms.Resize(input_dim),
+        transforms.Resize((input_dim, input_dim)),
         transforms.ToTensor(),
     ])
 
@@ -40,15 +42,27 @@ def run():
     MOMENTUM = kwargs['momentum']
     RANKING_LOSS = kwargs['ranking_loss']
     GPU_ID = kwargs['gpu_id']
+    CKPT_ROOT = kwargs['root_ckpt']
+    EXP_NO = kwargs['exp_no']
+    BACKBONE = 'alexnet'
+
+    os.makedirs(CKPT_ROOT, exist_ok=True)
+    model_file = os.path.join(CKPT_ROOT, '.'.join((EXP_NO, 'pth')))
+    hyperparam_file = os.path.join(CKPT_ROOT, '.'.join((EXP_NO, 'json')))
+    with open(hyperparam_file, 'w') as f:
+        json.dump(kwargs, f)
 
     device = 'cuda:{}'.format(GPU_ID) if torch.cuda.is_available() else 'cpu'
-    backbone = backbones.AlexNet()  # type: backbones.Backbone
+    backbone = None     # type: backbones.Backbone
+    if BACKBONE == 'alexnet':
+        backbone = backbones.AlexNet()
     batch = dict(
         train_batch_size=BATCH_TRAIN,
         val_batch_size=BATCH_VAL,
     )
     data_loaders = get_data_loaders(**batch, input_dim=backbone.input_dim(), train_size=TRAIN_SIZE)
     model = ViewFindingNet(backbone).to(device)
+    model.train()
     optimizer = optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM)
     loss_fn = None
     if RANKING_LOSS == 'ranknet':
@@ -61,11 +75,10 @@ def run():
     )
     desc = 'EPOCH - loss: {:.4f}'
     pbar = tqdm(initial=0, leave=False, total=len(data_loaders['train']), desc=desc.format(0), ascii=True)
-    log_interval = 10
+    log_interval = 1
 
     def step(engine, batch):
         # initialize
-        model.train()
         optimizer.zero_grad()
 
         # fetch inputs and transfer to specific device
@@ -124,13 +137,14 @@ def run():
         tqdm.write(
             'Training Results - Epoch: {}\n'
             'Loss: {:.4f}\n'.format(engine.state.epoch, engine.state.output['loss']))
+        torch.save(model.state_dict(), model_file)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
-        evaluator.run(data_loaders['val'])
-        tqdm.write(
-            'Validation Results - Epoch: {}\n'
-            'Loss: {:.4f}\n'.format(engine.state.epoch, evaluator.state.output['loss']))
+        # evaluator.run(data_loaders['val'])
+        # tqdm.write(
+        #     'Validation Results - Epoch: {}\n'
+        #     'Loss: {:.4f}\n'.format(engine.state.epoch, evaluator.state.output['loss']))
 
         pbar.n = pbar.last_print_n = 0
 
@@ -142,12 +156,14 @@ if __name__ == '__main__':
     kwargs = dict(
         num_epochs=200,
         batch_train=100,
-        batch_val=14,
+        batch_val=100,
         train_size=17000 * 14,
         learning_rate=0.01,
         momentum=0.9,
-        ranking_loss='ranknet',
-        root_dir='../raw_images/flickr_pro',
-        gpu_id=0,
+        ranking_loss='svm',
+        root_dir='raw_images/flickr_pro',
+        gpu_id=1,
+        root_ckpt='ckpt/',
+        exp_no='exp01'
     )
     run()
