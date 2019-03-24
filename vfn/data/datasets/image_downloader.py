@@ -30,7 +30,7 @@ class ImageDownloader(object):
                     image_file.write(self._read_image(url))
 
 
-def download(root_dir, image_urls):
+def download_images_from_urls(root_dir, image_urls):
     def _read_image(_url):
         with urllib.request.urlopen(_url) as response:
             return response.read()
