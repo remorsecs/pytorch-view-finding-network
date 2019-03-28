@@ -5,8 +5,8 @@ import os
 import cv2
 from tqdm import trange
 from torch.utils.data import Dataset
-from ioutils import download, extract
-from evaluation import ImageCropperEvaluator
+from .ioutils import download, extract
+from .evaluation import ImageCropperEvaluator
 
 
 class ICDB(Dataset):
@@ -34,6 +34,11 @@ class ICDB(Dataset):
     def __getitem__(self, index):
         return self.img_list[index], self.img_sizes[index], self.annotations[index]
 
+    def __repr__(self):
+        fmt_str = 'Dataset ' + self.__class__.__meta_name + '\n'
+        fmt_str += '\tNumber of images: {}\n'.format(self.__len__())
+        return fmt_str
+
     def _download(self, root_dir):
         if not os.path.isdir(root_dir):
             os.makedirs(root_dir)
@@ -55,7 +60,7 @@ class ICDB(Dataset):
 
     def _fetch_metadata(self):
         annotation_file = os.path.join(self.root_dir, 'Cropping parameters.txt')
-        assert os.path.exists(annotation_file), 'Parameter file does not exist!'
+        assert os.path.exists(annotation_file), 'Parameter file {} does not exist!'.format(annotation_file)
 
         with open(annotation_file, 'r') as f:
             lines = f.readlines()
