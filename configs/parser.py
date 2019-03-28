@@ -42,9 +42,9 @@ class ConfigParser:
         if self.backbone_name == 'AlexNet':
             backbone_model = backbones.AlexNet
 
-        backbone = partial(backbone_model, **self.configs['model'])
+        backbone = backbone_model(**self.configs['model']['backbone'])
         model = models.ViewFindingNet(backbone=backbone)
-        self.input_dim = backbone_model.input_dim()
+        self.input_dim = backbone.input_dim()
         return model
 
     def parse_optimizer(self):
