@@ -44,9 +44,12 @@ class FCDB(Dataset):
         return self.filenames[index], self.image_sizes[index], self.annotations[index]
 
     def __repr__(self):
-        fmt_str = 'Dataset ' + self.__class__.__meta_name + '\n'
+        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
         fmt_str += '\tNumber of images: {}\n'.format(self.__len__())
         return fmt_str
+
+    def __str__(self):
+        return self.__class__.__name__
 
     def _download_metadata(self):
         if not os.path.isdir(self.root_dir):
