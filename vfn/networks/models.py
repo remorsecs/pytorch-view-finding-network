@@ -18,6 +18,11 @@ class ViewFindingNet(nn.Module):
             nn.Linear(1000, 1),
         )
 
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight)
+                m.bias.data.zero_()
+
     def forward(self, image):
         x = self.backbone(image)    # type: torch.Tensor
         x = x.view((x.size(0), -1))
