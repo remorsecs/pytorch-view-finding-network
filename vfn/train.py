@@ -1,78 +1,21 @@
-import json
-import os
+import argparse
 import torch
 import torch.cuda
-import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 from ignite.engine import Events, Engine
-from ignite.metrics import Loss
 from tqdm import tqdm
 
-import vfn.networks.backbones as backbones
 from configs.parser import ConfigParser
-from vfn.networks.models import ViewFindingNet
-from vfn.networks.losses import ranknet_loss, svm_loss
-from vfn.data.datasets.FlickrPro import FlickrPro
 
 
-def get_data_loaders(train_batch_size, val_batch_size, input_dim, train_size):
-    data_transform = transforms.Compose([
-        transforms.Resize((input_dim, input_dim)),
-        transforms.ToTensor(),
-    ])
+def run(configs):
+    device = configs.parse_device()
+    num_epochs = configs.parse_num_epochs()
+    model = configs.parse_model().to(device)
+    data_loaders = configs.parse_dataloader()
+    optimizer = configs.parse_optimizer()
+    optimizer = optimizer(model.parameters())
+    loss_fn = configs.parse_loss_function()
 
-    dataset = FlickrPro(root_dir=kwargs['root_dir'], transforms=data_transform)
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-
-    data_loaders = dict(
-        train=DataLoader(train_dataset, train_batch_size, shuffle=True),
-        val=DataLoader(val_dataset, val_batch_size, shuffle=False),
-    )
-    return data_loaders
-
-
-def run():
-    NUM_EPOCHS = kwargs['num_epochs']
-    BATCH_TRAIN = kwargs['batch_train']
-    BATCH_VAL = kwargs['batch_val']
-    TRAIN_SIZE = kwargs['train_size']
-    LR = kwargs['learning_rate']
-    MOMENTUM = kwargs['momentum']
-    RANKING_LOSS = kwargs['ranking_loss']
-    GPU_ID = kwargs['gpu_id']
-    CKPT_ROOT = kwargs['root_ckpt']
-    EXP_NO = kwargs['exp_no']
-    BACKBONE = 'alexnet'
-
-    os.makedirs(CKPT_ROOT, exist_ok=True)
-    model_file = os.path.join(CKPT_ROOT, '.'.join((EXP_NO, 'pth')))
-    hyperparam_file = os.path.join(CKPT_ROOT, '.'.join((EXP_NO, 'json')))
-    with open(hyperparam_file, 'w') as f:
-        json.dump(kwargs, f)
-
-    device = 'cuda:{}'.format(GPU_ID) if torch.cuda.is_available() else 'cpu'
-    backbone = None     # type: backbones.Backbone
-    if BACKBONE == 'alexnet':
-        backbone = backbones.AlexNet()
-    batch = dict(
-        train_batch_size=BATCH_TRAIN,
-        val_batch_size=BATCH_VAL,
-    )
-    data_loaders = get_data_loaders(**batch, input_dim=backbone.input_dim(), train_size=TRAIN_SIZE)
-    model = ViewFindingNet(backbone).to(device)
-    model.train()
-    optimizer = optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM)
-    loss_fn = None
-    if RANKING_LOSS == 'ranknet':
-        loss_fn = ranknet_loss
-    elif RANKING_LOSS == 'svm':
-        loss_fn = svm_loss
-
-    metric = dict(
-        loss=Loss(loss_fn)
-    )
     desc = 'EPOCH - loss: {:.4f}'
     pbar = tqdm(initial=0, leave=False, total=len(data_loaders['train']), desc=desc.format(0), ascii=True)
     log_interval = 1
@@ -148,22 +91,17 @@ def run():
 
         pbar.n = pbar.last_print_n = 0
 
-    trainer.run(data_loaders['train'], NUM_EPOCHS)
+    trainer.run(data_loaders['train'], num_epochs)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    args = parser.parse_args()
+
+    configs = ConfigParser(args.config_file)
+    run(configs)
 
 
 if __name__ == '__main__':
-    # TODO: parse YAML by ConfigParser
-    kwargs = dict(
-        num_epochs=200,
-        batch_train=100,
-        batch_val=100,
-        train_size=17000 * 14,
-        learning_rate=0.01,
-        momentum=0.9,
-        ranking_loss='svm',
-        root_dir='raw_images/flickr_pro',
-        gpu_id=1,
-        root_ckpt='ckpt/',
-        exp_no='exp01'
-    )
-    run()
+    main()
