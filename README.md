@@ -10,7 +10,6 @@
 ### Usage
 
 ```bash
-python vfn/train.py --config /path/to/config.yml
-python vfn/evaluate.py --config /path/to/config.yml
-python vfn/infer.py --image /path/to/image --config /path/to/config.yml
+python -m vfn.train --config_file='configs/DEFAULT.yml'
+python -m vfn.evaluate --config_file='configs/DEFAULT.yml'
 ```
