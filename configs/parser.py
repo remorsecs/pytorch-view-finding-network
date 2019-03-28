@@ -34,8 +34,8 @@ class ConfigParser:
         with open(config_file, 'r') as f:
             self.configs = yaml.load(f)
 
-    def parse_num_epochs(self):
-        return self.configs['train']['num_epochs']
+    def get_model_name(self):
+        return self.backbone_name
 
     def parse_model(self):
         backbone_model = None

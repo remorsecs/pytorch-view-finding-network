@@ -2,6 +2,7 @@ import argparse
 import torch
 import torch.cuda
 from ignite.engine import Events, Engine
+from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
 
 from configs.parser import ConfigParser
@@ -9,7 +10,8 @@ from configs.parser import ConfigParser
 
 def run(configs):
     device = configs.parse_device()
-    num_epochs = configs.parse_num_epochs()
+    num_epochs = configs['train']['num_epochs']
+    model_name = configs.get_model_name()
     model = configs.parse_model().to(device)
     data_loaders = configs.parse_dataloader()
     optimizer = configs.parse_optimizer()
@@ -45,6 +47,7 @@ def run(configs):
 
     trainer = Engine(step)
 
+    # for validation
     def inference(engine, batch):
         model.eval()
         with torch.no_grad():
@@ -80,11 +83,17 @@ def run(configs):
         tqdm.write(
             'Training Results - Epoch: {}\n'
             'Loss: {:.4f}\n'.format(engine.state.epoch, engine.state.output['loss']))
-        torch.save(model.state_dict(), model_file)
+
+    ckpt_handler = ModelCheckpoint(
+        dirname=configs['checkpoint']['root_dir'],
+        filename_prefix=configs['checkpoint']['prefix'],
+        n_saved=configs['train']['num_epochs'],
+    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, ckpt_handler, {model_name: model})
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
-        # evaluator.run(data_loaders['val'])
+        evaluator.run(data_loaders['val'])
         # tqdm.write(
         #     'Validation Results - Epoch: {}\n'
         #     'Loss: {:.4f}\n'.format(engine.state.epoch, evaluator.state.output['loss']))
