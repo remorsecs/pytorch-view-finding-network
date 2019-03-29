@@ -8,115 +8,102 @@ from tqdm import tqdm
 from configs.parser import ConfigParser
 
 
-def run(configs):
-    device = configs.parse_device()
-    num_epochs = configs.configs['train']['num_epochs']
-    model_name = configs.get_model_name()
-    model = configs.parse_model().to(device)
-    data_loaders = configs.parse_dataloader()
-    optimizer = configs.parse_optimizer()
-    optimizer = optimizer(model.parameters())
-    loss_fn = configs.parse_loss_function()
+class Trainer:
 
-    desc = 'EPOCH - loss: {:.4f}'
-    pbar = tqdm(initial=0, leave=False, total=len(data_loaders['train']), desc=desc.format(0), ascii=True)
-    log_interval = 1
+    def __init__(self, configs):
+        self.configs = configs
+        self._init_config_settings()
+        self._init_logger()
+        self._init_trainer()
+        self._init_validator()
 
-    def step(engine, batch):
-        # initialize
-        optimizer.zero_grad()
+    def _init_config_settings(self):
+        self.device = self.configs.parse_device()
+        self.num_epochs = self.configs.configs['train']['num_epochs']
+        self.model_name = self.configs.get_model_name()
+        self.model = self.configs.parse_model().to(self.device)
+        self.data_loaders = self.configs.parse_dataloader()
+        self.optimizer = self.configs.parse_optimizer()
+        self.optimizer = self.optimizer(self.model.parameters())
+        self.loss_fn = self.configs.parse_loss_function()
 
+    def _init_logger(self):
+        self.desc = 'Loss: {:.6f}'
+        self.pbar = tqdm(initial=0,
+                         leave=False,
+                         total=len(self.data_loaders['train']),
+                         desc=self.desc.format(0),
+                         ascii=True,
+                         )
+        self.log_interval = 1
+
+    def _init_trainer(self):
+        self.trainer = Engine(self._inference)
+        self.trainer.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=True)
+        self.trainer.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=True)
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._run_validation)
+        ckpt_handler = ModelCheckpoint(
+            dirname=self.configs.configs['checkpoint']['root_dir'],
+            filename_prefix=self.configs.configs['checkpoint']['prefix'],
+            save_interval=1,
+            n_saved=self.num_epochs,
+        )
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, ckpt_handler, {self.model_name: self.model})
+
+    def _init_validator(self):
+        self.validator = Engine(self._inference)
+        self.validator.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=False)
+        self.validator.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
+        self.validator.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=False)
+
+    def _set_model_stage(self, engine, is_train):
+        self.model.train(is_train)
+        torch.set_grad_enabled(is_train)
+        engine.state.is_train = is_train
+
+    def _inference(self, engine, batch):
         # fetch inputs and transfer to specific device
         image_raw, image_crop = batch
-        image_raw, image_crop = image_raw.to(device), image_crop.to(device)
+        image_raw, image_crop = image_raw.to(self.device), image_crop.to(self.device)
 
         # forward
-        score_I = model(image_raw)
-        score_C = model(image_crop)
+        score_I = self.model(image_raw)
+        score_C = self.model(image_crop)
+        loss = self.loss_fn(score_I, score_C)
 
         # backward
-        loss = loss_fn(score_I, score_C)
-        loss.backward()
-        optimizer.step()
+        if engine.state.is_train:
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+        engine.state.average_loss = loss.sum().item() / len(batch)
 
         return dict(
             score_I=score_I,
             score_C=score_C,
-            loss=loss.item()
+            sum_loss=loss.sum().item()
         )
 
-    trainer = Engine(step)
+    def _log_iteration(self, engine):
+        self.pbar.desc = self.desc.format(engine.state.average_loss)
+        self.pbar.update(self.log_interval)
 
-    # for validation
-    def inference(engine, batch):
-        model.eval()
-        with torch.no_grad():
-            # fetch inputs and transfer to specific device
-            image_raw, image_crop = batch
-            image_raw, image_crop = image_raw.to(device), image_crop.to(device)
+    def _log_epoch(self, engine, is_train):
+        stage = 'Training' if is_train else 'Validation'
+        self.pbar.refresh()
+        if is_train:
+            tqdm.write('Epoch {}:\n'.format(engine.state.epoch))
 
-            # forward
-            score_I = model(image_raw)
-            score_C = model(image_crop)
+        tqdm.write('{} Loss: {:.6f}\n'.format(stage, engine.state.average_loss))
+        self.pbar.n = self.pbar.last_print_n = 0
 
-            loss = loss_fn(score_I, score_C)
-            loss = loss.sum()
+    def _run_validation(self, engine):
+        self.validator.run(self.data_loaders['val'])
 
-            return dict(
-                score_I=score_I,
-                score_C=score_C,
-                sum_loss=loss.item()
-            )
-
-    evaluator = Engine(inference)
-
-    # for evaluator
-    @evaluator.on(Events.EPOCH_STARTED)
-    def init_sum_loss(engine):
-        engine.state.sum_loss = 0
-
-    @evaluator.on(Events.ITERATION_COMPLETED)
-    def compute_sum_loss(engine):
-        engine.state.sum_loss += engine.state.output['sum_loss']
-
-    @evaluator.on(Events.EPOCH_COMPLETED)
-    def compute_average_loss(engine):
-        engine.state.average_loss = engine.state.sum_loss / len(data_loaders['val'])
-
-    # for trainer
-    @trainer.on(Events.ITERATION_COMPLETED)
-    def log_training_loss(engine):
-        iter = (engine.state.iteration - 1) % len(data_loaders['train']) + 1
-
-        if iter % log_interval == 0:
-            pbar.desc = desc.format(engine.state.output['loss'])
-            pbar.update(log_interval)
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_training_results(engine):
-        pbar.refresh()
-        tqdm.write(
-            'Training Results - Epoch: {}\n'
-            'Loss: {:.4f}\n'.format(engine.state.epoch, engine.state.average_loss))
-
-    ckpt_handler = ModelCheckpoint(
-        dirname=configs.configs['checkpoint']['root_dir'],
-        filename_prefix=configs.configs['checkpoint']['prefix'],
-        save_interval=1,
-        n_saved=configs.configs['train']['num_epochs'],
-    )
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, ckpt_handler, {model_name: model})
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_validation_results(engine):
-        evaluator.run(data_loaders['val'])
-        tqdm.write(
-            'Validation Results - Epoch: {}\n'
-            'Loss: {:.4f}\n'.format(engine.state.epoch, evaluator.state.average_loss))
-
-        pbar.n = pbar.last_print_n = 0
-
-    trainer.run(data_loaders['train'], num_epochs)
+    def run(self):
+        self.trainer.run(self.data_loaders['train'], self.num_epochs)
 
 
 def main():
@@ -125,7 +112,8 @@ def main():
     args = parser.parse_args()
 
     configs = ConfigParser(args.config_file)
-    run(configs)
+    trainer = Trainer(configs)
+    trainer.run()
 
 
 if __name__ == '__main__':
