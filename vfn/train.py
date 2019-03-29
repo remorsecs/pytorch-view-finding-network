@@ -61,6 +61,7 @@ class Trainer:
         self.model.train(is_train)
         torch.set_grad_enabled(is_train)
         engine.state.is_train = is_train
+        engine.state.cum_average_loss = 0
 
     def _inference(self, engine, batch):
         # fetch inputs and transfer to specific device
@@ -78,25 +79,21 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-        engine.state.average_loss = loss.sum().item() / len(batch)
-
-        return dict(
-            score_I=score_I,
-            score_C=score_C,
-            sum_loss=loss.sum().item()
-        )
+        engine.state.cum_average_loss += loss.mean().item()
 
     def _log_iteration(self, engine):
-        self.pbar.desc = self.desc.format(engine.state.average_loss)
+        average_loss = engine.state.cum_average_loss / engine.state.iteration
+        self.pbar.desc = self.desc.format(average_loss)
         self.pbar.update(self.log_interval)
 
     def _log_epoch(self, engine, is_train):
         stage = 'Training' if is_train else 'Validation'
         self.pbar.refresh()
         if is_train:
-            tqdm.write('Epoch {}:\n'.format(engine.state.epoch))
+            tqdm.write('Epoch {}:'.format(engine.state.epoch))
 
-        tqdm.write('{} Loss: {:.6f}\n'.format(stage, engine.state.average_loss))
+        average_loss = engine.state.cum_average_loss / engine.state.iteration
+        tqdm.write('{} Loss: {:.6f}'.format(stage, average_loss))
         self.pbar.n = self.pbar.last_print_n = 0
 
     def _run_validation(self, engine):
