@@ -1,18 +1,12 @@
-import os
+import argparse
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
-from ignite.engine import Events, Engine
-from ignite.metrics import Loss
-from tqdm import tqdm, trange
+from tqdm import trange
 
-import vfn.networks.backbones as backbones
+from vfn.networks import backbones
 from configs.parser import ConfigParser
 from vfn.networks.models import ViewFindingNet
-from vfn.networks.losses import ranknet_loss, svm_loss
-from vfn.data.datasets.FlickrPro import FlickrPro
-from vfn.data.datasets.FCDB import FCDB
 from vfn.data.datasets.evaluation import ImageCropperEvaluator
 
 
@@ -34,21 +28,15 @@ def generate_crop_annos_by_sliding_window(image):
     return crop_annos
 
 
-def main():
-    root_dir = ['FCDB', 'ICDB/All_Images']
+def evaluate_on(dataset, model, device):
+    print('Evaluate on {} dataset.'.format(dataset))
 
-    backbone = backbones.AlexNet()
-    model = ViewFindingNet(backbone)
-    model.load_state_dict(torch.load(kwargs['weight']))
-
-    # FCDB
-    dataset = FCDB(root_dir[0], download=False)
     data_transforms = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
     ])
     ground_truth, img_sizes, pred = [], [], []
-    for i in trange(len(dataset)):
+    for i in trange(len(dataset), ascii=True):
         filename, size, crop = dataset[i]
         ground_truth.append(crop)
         img_sizes.append(size)
@@ -66,6 +54,7 @@ def main():
                 crop_image = image.crop((x, y, x+w, y+h))
                 crop_image = data_transforms(crop_image)
                 crop_image = crop_image.view((1, *crop_image.size()))
+                crop_image = crop_image.to(device)
 
                 score = model(crop_image)
                 scores.append(score)
@@ -80,8 +69,25 @@ def main():
     evaluator.evaluate(ground_truth, pred, img_sizes)
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    args = parser.parse_args()
+
+    configs = ConfigParser(args.config_file)
+
+    datasets = [
+        configs.parse_ICDB(),
+        configs.parse_FCDB(),
+    ]
+    device = configs.parse_device()
+    backbone = backbones.AlexNet()
+    model = ViewFindingNet(backbone)
+    model.load_state_dict(torch.load(configs.configs['weight']))
+    model.to(device)
+    for dataset in datasets:
+        evaluate_on(dataset, model, device)
+
+
 if __name__ == '__main__':
-    kwargs = dict(
-        weight='ckpt/exp01.pth',
-    )
     main()
