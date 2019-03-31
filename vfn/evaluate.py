@@ -65,7 +65,6 @@ def evaluate_on(dataset, model, device):
         pred.append(crop_annos[idx])
 
     evaluator = ImageCropperEvaluator()
-    # evaluate ground truth, this should get perfect results
     evaluator.evaluate(ground_truth, pred, img_sizes)
 
 
