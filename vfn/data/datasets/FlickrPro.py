@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import os
 import pickle
+import random
 
 from PIL import Image
 from torch.utils.data import Dataset
@@ -14,8 +15,9 @@ from vfn.data.datasets.ioutils import download
 class FlickrPro(Dataset):
     __meta_name = 'flickr_pro.pkl'
 
-    def __init__(self, root_dir, download=True, transforms=None, is_train=True):
+    def __init__(self, root_dir, download=True, transforms=None,):
         super(FlickrPro, self).__init__()
+        random.seed()
 
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
@@ -24,7 +26,7 @@ class FlickrPro(Dataset):
         if download:
             self._download_metadata()
 
-        self.img_list, self.annotations, self.urls = self._fetch_metadata()
+        self._fetch_metadata()
 
         if download:
             self._download_images()
@@ -32,23 +34,20 @@ class FlickrPro(Dataset):
         self._check_integrity(root_dir)
 
     def __len__(self):
-        return len(self.img_list)
+        return len(self.filenames)
 
-    def __getitem__(self, index):
-        img_file = os.path.join(self.root_dir, self.img_list[index])
-        image_raw = Image.open(img_file).convert('RGB')
-        x, y, w, h = self.annotations[index]
-        image_crop = image_raw.crop((x, y, x+w, y+h))
+    def __getitem__(self, i):
+        j = random.randint(0, 13)
+        with Image.open(self.filenames[i]) as image:
+            raw_image = image.convert('RGB')
+            x, y, w, h = self.annotations[i][j]
+            crop_image = raw_image.crop((x, y, x + w, y + h))
 
-        # resize
-        image_raw = image_raw.resize((227, 227))
-        image_crop = image_crop.resize((227, 227))
+            if self.transforms:
+                raw_image = self.transforms(raw_image)
+                crop_image = self.transforms(crop_image)
 
-        if self.transforms:
-            image_raw = self.transforms(image_raw)
-            image_crop = self.transforms(image_crop)
-
-        return image_raw, image_crop
+        return raw_image, crop_image
 
     def _download_metadata(self):
         if not os.path.isdir(self.root_dir):
@@ -73,22 +72,27 @@ class FlickrPro(Dataset):
         with open(self.meta_file, 'rb') as f:
             db = pickle.load(f)
 
-        img_list, annotations, urls = [], [], []
-        for i in trange(len(db)):
-            if (i % 14) == 0:
-                urls.append(db[i]['url'])
+        self.filenames = []
+        self.annotations = []
+        self.urls = []
 
-            img_list.append(os.path.basename(db[i]['url']))
-            annotations.append(db[i]['crop'])
+        for i in trange(len(db) // 14):
+            url = db[i]['url']
+            self.urls.append(url)
+            filename = os.path.join(self.root_dir, os.path.basename(url))
+            self.filenames.append(filename)
+
+            self.annotations.append([])
+            for j in range(14):
+                self.annotations[i].append(db[i*14 + j]['crop'])
 
         print('Unpacked', len(db), 'records.')
-
-        return img_list, annotations, urls
 
     def _check_integrity(self, root_dir):
         pass
 
 
 if __name__ == "__main__":
-    flickr_pro = FlickrPro("../../../raw_images")
-    print(flickr_pro[0])
+    print(os.getcwd())
+    flickr_pro = FlickrPro("../../../raw_images/flickr_pro", download=False)
+    # print(flickr_pro[0])

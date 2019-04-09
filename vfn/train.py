@@ -1,153 +1,117 @@
+import argparse
 import torch
 import torch.cuda
-import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 from ignite.engine import Events, Engine
-from ignite.metrics import Loss
+from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
 
-import vfn.networks.backbones as backbones
 from configs.parser import ConfigParser
-from vfn.networks.models import ViewFindingNet
-from vfn.networks.losses import ranknet_loss, svm_loss
-from vfn.data.datasets.FlickrPro import FlickrPro
 
 
-def get_data_loaders(train_batch_size, val_batch_size, input_dim, train_size):
-    data_transform = transforms.Compose([
-        transforms.Resize(input_dim),
-        transforms.ToTensor(),
-    ])
+class Trainer:
 
-    dataset = FlickrPro(root_dir=kwargs['root_dir'], transforms=data_transform)
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    def __init__(self, configs):
+        self.configs = configs
+        self._init_config_settings()
+        self._init_logger()
+        self._init_trainer()
+        self._init_validator()
 
-    data_loaders = dict(
-        train=DataLoader(train_dataset, train_batch_size, shuffle=True),
-        val=DataLoader(val_dataset, val_batch_size, shuffle=False),
-    )
-    return data_loaders
+    def _init_config_settings(self):
+        self.device = self.configs.parse_device()
+        self.num_epochs = self.configs.configs['train']['num_epochs']
+        self.model_name = self.configs.get_model_name()
+        self.model = self.configs.parse_model().to(self.device)
+        self.data_loaders = self.configs.parse_dataloader()
+        self.optimizer = self.configs.parse_optimizer()
+        self.optimizer = self.optimizer(self.model.parameters())
+        self.loss_fn = self.configs.parse_loss_function()
 
+    def _init_logger(self):
+        self.desc = 'Loss: {:.6f}'
+        self.pbar = tqdm(initial=0,
+                         leave=False,
+                         total=len(self.data_loaders['train']),
+                         desc=self.desc.format(0),
+                         ascii=True,
+                         )
+        self.log_interval = 1
 
-def run():
-    NUM_EPOCHS = kwargs['num_epochs']
-    BATCH_TRAIN = kwargs['batch_train']
-    BATCH_VAL = kwargs['batch_val']
-    TRAIN_SIZE = kwargs['train_size']
-    LR = kwargs['learning_rate']
-    MOMENTUM = kwargs['momentum']
-    RANKING_LOSS = kwargs['ranking_loss']
-    GPU_ID = kwargs['gpu_id']
+    def _init_trainer(self):
+        self.trainer = Engine(self._inference)
+        self.trainer.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=True)
+        self.trainer.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=True)
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._run_validation)
+        ckpt_handler = ModelCheckpoint(
+            dirname=self.configs.configs['checkpoint']['root_dir'],
+            filename_prefix=self.configs.configs['checkpoint']['prefix'],
+            save_interval=1,
+            n_saved=self.num_epochs,
+        )
+        self.trainer.add_event_handler(Events.EPOCH_COMPLETED, ckpt_handler, {self.model_name: self.model})
 
-    device = 'cuda:{}'.format(GPU_ID) if torch.cuda.is_available() else 'cpu'
-    backbone = backbones.AlexNet()  # type: backbones.Backbone
-    batch = dict(
-        train_batch_size=BATCH_TRAIN,
-        val_batch_size=BATCH_VAL,
-    )
-    data_loaders = get_data_loaders(**batch, input_dim=backbone.input_dim(), train_size=TRAIN_SIZE)
-    model = ViewFindingNet(backbone).to(device)
-    optimizer = optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM)
-    loss_fn = None
-    if RANKING_LOSS == 'ranknet':
-        loss_fn = ranknet_loss
-    elif RANKING_LOSS == 'svm':
-        loss_fn = svm_loss
+    def _init_validator(self):
+        self.validator = Engine(self._inference)
+        self.validator.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=False)
+        self.validator.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
+        self.validator.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=False)
 
-    metric = dict(
-        loss=Loss(loss_fn)
-    )
-    desc = 'EPOCH - loss: {:.4f}'
-    pbar = tqdm(initial=0, leave=False, total=len(data_loaders['train']), desc=desc.format(0), ascii=True)
-    log_interval = 10
+    def _set_model_stage(self, engine, is_train):
+        self.model.train(is_train)
+        torch.set_grad_enabled(is_train)
+        engine.state.is_train = is_train
+        engine.state.cum_average_loss = 0
 
-    def step(engine, batch):
-        # initialize
-        model.train()
-        optimizer.zero_grad()
-
+    def _inference(self, engine, batch):
         # fetch inputs and transfer to specific device
         image_raw, image_crop = batch
-        image_raw, image_crop = image_raw.to(device), image_crop.to(device)
+        image_raw, image_crop = image_raw.to(self.device), image_crop.to(self.device)
 
         # forward
-        score_I = model(image_raw)
-        score_C = model(image_crop)
+        score_I = self.model(image_raw)
+        score_C = self.model(image_crop)
+        loss = self.loss_fn(score_I, score_C)
 
         # backward
-        loss = loss_fn(score_I, score_C)
-        loss.backward()
-        optimizer.step()
+        if engine.state.is_train:
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
-        return dict(
-            score_I=score_I,
-            score_C=score_C,
-            loss=loss.item()
-        )
+        engine.state.cum_average_loss += loss.mean().item()
 
-    trainer = Engine(step)
+    def _log_iteration(self, engine):
+        average_loss = engine.state.cum_average_loss / engine.state.iteration
+        self.pbar.desc = self.desc.format(average_loss)
+        self.pbar.update(self.log_interval)
 
-    def inference(engine, batch):
-        model.eval()
-        with torch.no_grad():
-            # fetch inputs and transfer to specific device
-            image_raw, image_crop = batch
-            image_raw, image_crop = image_raw.to(device), image_crop.to(device)
+    def _log_epoch(self, engine, is_train):
+        stage = 'Training' if is_train else 'Validation'
+        self.pbar.refresh()
+        if is_train:
+            tqdm.write('Epoch {}:'.format(engine.state.epoch))
 
-            # forward
-            score_I = model(image_raw)
-            score_C = model(image_crop)
+        average_loss = engine.state.cum_average_loss / engine.state.iteration
+        tqdm.write('{} Loss: {:.6f}'.format(stage, average_loss))
+        self.pbar.n = self.pbar.last_print_n = 0
 
-            loss = loss_fn(score_I, score_C)
+    def _run_validation(self, engine):
+        self.validator.run(self.data_loaders['val'])
 
-            return dict(
-                score_I=score_I,
-                score_C=score_C,
-                loss=loss.item()
-            )
+    def run(self):
+        self.trainer.run(self.data_loaders['train'], self.num_epochs)
 
-    evaluator = Engine(inference)
 
-    @trainer.on(Events.ITERATION_COMPLETED)
-    def log_training_loss(engine):
-        iter = (engine.state.iteration - 1) % len(data_loaders['train']) + 1
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    args = parser.parse_args()
 
-        if iter % log_interval == 0:
-            pbar.desc = desc.format(engine.state.output['loss'])
-            pbar.update(log_interval)
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_training_results(engine):
-        pbar.refresh()
-        tqdm.write(
-            'Training Results - Epoch: {}\n'
-            'Loss: {:.4f}\n'.format(engine.state.epoch, engine.state.output['loss']))
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_validation_results(engine):
-        evaluator.run(data_loaders['val'])
-        tqdm.write(
-            'Validation Results - Epoch: {}\n'
-            'Loss: {:.4f}\n'.format(engine.state.epoch, evaluator.state.output['loss']))
-
-        pbar.n = pbar.last_print_n = 0
-
-    trainer.run(data_loaders['train'], NUM_EPOCHS)
+    configs = ConfigParser(args.config_file)
+    trainer = Trainer(configs)
+    trainer.run()
 
 
 if __name__ == '__main__':
-    # TODO: parse YAML by ConfigParser
-    kwargs = dict(
-        num_epochs=200,
-        batch_train=100,
-        batch_val=14,
-        train_size=17000 * 14,
-        learning_rate=0.01,
-        momentum=0.9,
-        ranking_loss='ranknet',
-        root_dir='../raw_images/flickr_pro',
-        gpu_id=0,
-    )
-    run()
+    main()
