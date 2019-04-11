@@ -77,7 +77,8 @@ class ICDB(Dataset):
             crop = [int(x) for x in lines[i*4 + self.subset].split(' ')]
             # convert from (y1, y2, x1, x2) to (x, y, w, h) format
             annotations.append([crop[2], crop[0], crop[3] - crop[2], crop[1] - crop[0]])
-            img_list.append(filename)
+            img_path = os.path.join(self.image_dir, filename)
+            img_list.append(img_path)
             height, width = cv2.imread(os.path.join(self.image_dir, filename)).shape[:2]
             img_sizes.append((width, height))
             category.append(label)
