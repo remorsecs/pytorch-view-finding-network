@@ -36,6 +36,9 @@ class ICDB(Dataset):
     def __getitem__(self, index):
         return self.img_list[index], self.img_sizes[index], self.crops[index], self.category[index]
 
+    def __str__(self):
+        return 'ICDB dataset'
+
     def get_metadata_by_group(self, label):
         assert label in self.img_groups.keys(), 'Unknown category %s' % label
         return self.img_groups[label], self.crop_groups[label], self.size_groups[label]

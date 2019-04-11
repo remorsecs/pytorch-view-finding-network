@@ -38,6 +38,9 @@ class FCDB(Dataset):
     def __getitem__(self, index):
         return self.img_list[index], self.img_sizes[index], self.annotations[index]
 
+    def __str__(self):
+        return 'FCDB dataset'
+
     def _download(self, root_dir):
         if not os.path.isdir(root_dir):
             os.makedirs(root_dir)
