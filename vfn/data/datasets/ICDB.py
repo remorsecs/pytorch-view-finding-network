@@ -96,7 +96,7 @@ class ICDB(Dataset):
         pass
 
 
-if __name__ == "__main__":
+def main():
     db = ICDB("../../../ICDB")
     print(db[0])
 
@@ -106,3 +106,7 @@ if __name__ == "__main__":
     evaluator = ImageCropperEvaluator()
     # evaluate ground truth, this should get perfect results
     evaluator.evaluate(crops, crops, sizes)
+
+
+if __name__ == "__main__":
+    main()
