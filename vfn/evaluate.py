@@ -4,8 +4,8 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import trange
 
-from vfn.networks import backbones
 from configs.parser import ConfigParser
+from vfn.networks import backbones
 from vfn.networks.models import ViewFindingNet
 from vfn.data.datasets.evaluation import ImageCropperEvaluator
 
@@ -37,9 +37,10 @@ def evaluate_on(dataset, model, device):
     ])
     ground_truth, img_sizes, pred = [], [], []
     for i in trange(len(dataset), ascii=True):
-        filename, size, crop = dataset[i]
-        ground_truth.append(crop)
+        data = dataset[i]
+        filename, size, crop = data[0:3]
         img_sizes.append(size)
+        ground_truth.append(crop)
 
         with Image.open(filename) as image:
             image = image.convert('RGB')
@@ -75,7 +76,7 @@ def main():
 
     configs = ConfigParser(args.config_file)
 
-    datasets = [
+    testsets = [
         configs.parse_ICDB(),
         configs.parse_FCDB(),
     ]
@@ -84,8 +85,8 @@ def main():
     model = ViewFindingNet(backbone)
     model.load_state_dict(torch.load(configs.configs['weight']))
     model.to(device)
-    for dataset in datasets:
-        evaluate_on(dataset, model, device)
+    for testset in testsets:
+        evaluate_on(testset, model, device)
 
 
 if __name__ == '__main__':
