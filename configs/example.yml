@@ -1,0 +1,47 @@
+---
+checkpoint:
+  root_dir: 'ckpt/exp01'
+  prefix: 'exp01'
+
+weight: 'ckpt/exp01/exp01_AlexNet_20.pth'
+
+device: 'cuda:0'  # 'cuda:0', 'cuda:1', ... or 'cpu'
+
+model:
+  backbone:
+    name: 'AlexNet'
+    pretrained: True
+
+train:
+  num_epochs: 20
+
+  optimizer:
+    name: 'Adam'
+    lr: 0.001
+
+  loss:
+    name: 'hinge'
+
+  dataset:
+    name: 'FlickrPro'
+    root_dir: 'raw_images/flickr_pro'
+    train_size: 17000
+
+  dataloader:
+    batch_size: 100
+    shuffle: True
+
+validation:
+  dataloader:
+    batch_size: 100
+    shuffle: False
+
+evaluate:
+  FCDB:
+    root_dir: 'FCDB'
+    download: False
+
+  ICDB:
+    root_dir: 'ICDB'
+    download: False
+...

@@ -36,6 +36,9 @@ class ICDB(Dataset):
     def __getitem__(self, index):
         return self.img_list[index], self.img_sizes[index], self.crops[index], self.category[index]
 
+    def __str__(self):
+        return 'ICDB dataset'
+
     def get_metadata_by_group(self, label):
         assert label in self.img_groups.keys(), 'Unknown category %s' % label
         return self.img_groups[label], self.crop_groups[label], self.size_groups[label]
@@ -77,7 +80,8 @@ class ICDB(Dataset):
             crop = [int(x) for x in lines[i*4 + self.subset].split(' ')]
             # convert from (y1, y2, x1, x2) to (x, y, w, h) format
             annotations.append([crop[2], crop[0], crop[3] - crop[2], crop[1] - crop[0]])
-            img_list.append(filename)
+            img_path = os.path.join(self.image_dir, filename)
+            img_list.append(img_path)
             height, width = cv2.imread(os.path.join(self.image_dir, filename)).shape[:2]
             img_sizes.append((width, height))
             category.append(label)
@@ -96,7 +100,7 @@ class ICDB(Dataset):
         pass
 
 
-if __name__ == "__main__":
+def main():
     db = ICDB("../../../ICDB")
     print(db[0])
 
@@ -106,3 +110,7 @@ if __name__ == "__main__":
     evaluator = ImageCropperEvaluator()
     # evaluate ground truth, this should get perfect results
     evaluator.evaluate(crops, crops, sizes)
+
+
+if __name__ == "__main__":
+    main()

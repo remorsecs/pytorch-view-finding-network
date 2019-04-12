@@ -4,8 +4,8 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import trange
 
-from vfn.networks import backbones
 from configs.parser import ConfigParser
+from vfn.networks import backbones
 from vfn.networks.models import ViewFindingNet
 from vfn.data.datasets.evaluation import ImageCropperEvaluator
 
@@ -29,7 +29,7 @@ def generate_crop_annos_by_sliding_window(image):
 
 
 def evaluate_on(dataset, model, device):
-    print('Evaluate on {} dataset.'.format(dataset))
+    print('Evaluate on {}.'.format(dataset))
 
     data_transforms = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -37,9 +37,10 @@ def evaluate_on(dataset, model, device):
     ])
     ground_truth, img_sizes, pred = [], [], []
     for i in trange(len(dataset), ascii=True):
-        filename, size, crop = dataset[i]
-        ground_truth.append(crop)
+        data = dataset[i]
+        filename, size, crop = data[0:3]
         img_sizes.append(size)
+        ground_truth.append(crop)
 
         with Image.open(filename) as image:
             image = image.convert('RGB')
@@ -65,28 +66,27 @@ def evaluate_on(dataset, model, device):
         pred.append(crop_annos[idx])
 
     evaluator = ImageCropperEvaluator()
-    # evaluate ground truth, this should get perfect results
     evaluator.evaluate(ground_truth, pred, img_sizes)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/example.yml')
     args = parser.parse_args()
 
     configs = ConfigParser(args.config_file)
 
-    datasets = [
-        configs.parse_ICDB(),
+    testsets = [
         configs.parse_FCDB(),
+        configs.parse_ICDB(),
     ]
     device = configs.parse_device()
     backbone = backbones.AlexNet()
     model = ViewFindingNet(backbone)
     model.load_state_dict(torch.load(configs.configs['weight']))
     model.to(device)
-    for dataset in datasets:
-        evaluate_on(dataset, model, device)
+    for testset in testsets:
+        evaluate_on(testset, model, device)
 
 
 if __name__ == '__main__':

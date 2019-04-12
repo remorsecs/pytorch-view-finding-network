@@ -1,9 +1,12 @@
 import argparse
+import numpy as np
 import torch
 import torch.cuda
+
 from ignite.engine import Events, Engine
 from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
+from visdom import Visdom
 
 from configs.parser import ConfigParser
 
@@ -29,13 +32,15 @@ class Trainer:
 
     def _init_logger(self):
         self.desc = 'Loss: {:.6f}'
-        self.pbar = tqdm(initial=0,
-                         leave=False,
-                         total=len(self.data_loaders['train']),
-                         desc=self.desc.format(0),
-                         ascii=True,
-                         )
+        self.pbar = tqdm(
+            initial=0,
+            leave=False,
+            total=len(self.data_loaders['train']),
+            desc=self.desc.format(0),
+            ascii=True,
+        )
         self.log_interval = 1
+        self.vis = Visdom()
 
     def _init_trainer(self):
         self.trainer = Engine(self._inference)
@@ -90,11 +95,27 @@ class Trainer:
         stage = 'Training' if is_train else 'Validation'
         self.pbar.refresh()
         if is_train:
-            tqdm.write('Epoch {}:'.format(engine.state.epoch))
+            tqdm.write('Epoch {}:'.format(self.trainer.state.epoch))
 
         average_loss = engine.state.cum_average_loss / engine.state.iteration
         tqdm.write('{} Loss: {:.6f}'.format(stage, average_loss))
         self.pbar.n = self.pbar.last_print_n = 0
+        self.vis.line(
+            Y=np.array([average_loss]),
+            X=np.array([self.trainer.state.epoch]),
+            win='Learning Curve',
+            env=self.configs.configs['checkpoint']['prefix'],
+            update='append',
+            name=stage,
+            opts=dict(
+                opts=dict(
+                    title='Learning Curve',
+                    showlegend=True,
+                    xlabel='Epoch',
+                    ylabel='Loss',
+                )
+            )
+        )
 
     def _run_validation(self, engine):
         self.validator.run(self.data_loaders['val'])
@@ -105,7 +126,7 @@ class Trainer:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/example.yml')
     args = parser.parse_args()
 
     configs = ConfigParser(args.config_file)
