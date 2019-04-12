@@ -107,6 +107,14 @@ class Trainer:
             env=self.configs.configs['checkpoint']['prefix'],
             update='append',
             name=stage,
+            opts=dict(
+                opts=dict(
+                    title='Learning Curve',
+                    showlegend=True,
+                    xlabel='Epoch',
+                    ylabel='Loss',
+                )
+            )
         )
 
     def _run_validation(self, engine):
