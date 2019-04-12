@@ -71,7 +71,7 @@ def evaluate_on(dataset, model, device):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/DEFAULT.yml')
+    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/example.yml')
     args = parser.parse_args()
 
     configs = ConfigParser(args.config_file)
