@@ -29,7 +29,7 @@ def generate_crop_annos_by_sliding_window(image):
 
 
 def evaluate_on(dataset, model, device):
-    print('Evaluate on {} dataset.'.format(dataset))
+    print('Evaluate on {}.'.format(dataset))
 
     data_transforms = transforms.Compose([
         transforms.Resize((224, 224)),
