@@ -53,6 +53,7 @@ class Trainer:
             filename_prefix=self.configs.configs['checkpoint']['prefix'],
             save_interval=1,
             n_saved=self.num_epochs,
+            require_empty=False,
         )
         self.trainer.add_event_handler(Events.EPOCH_COMPLETED, ckpt_handler, {self.model_name: self.model})
 
@@ -103,17 +104,15 @@ class Trainer:
         self.vis.line(
             Y=np.array([average_loss]),
             X=np.array([self.trainer.state.epoch]),
-            win='Learning Curve',
+            win='loss-epoch',
             env=self.configs.configs['checkpoint']['prefix'],
             update='append',
             name=stage,
             opts=dict(
-                opts=dict(
-                    title='Learning Curve',
-                    showlegend=True,
-                    xlabel='Epoch',
-                    ylabel='Loss',
-                )
+                title='Learning Curve',
+                showlegend=True,
+                xlabel='Epoch',
+                ylabel='Loss',
             )
         )
 
