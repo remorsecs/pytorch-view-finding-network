@@ -72,7 +72,13 @@ def evaluate_on(dataset, model, device, env, examples=5):
                 image = plot_bbox(image, [ground_truth[-1]], ColorType.GROUNDTRUTH)
                 image = plot_bbox(image, [crop_annos[idx]], ColorType.PREDICT)
                 image_tensor = transforms.ToTensor()(image)
-                vis.image(image_tensor, env=env)
+                vis.image(
+                    image_tensor,
+                    env=env,
+                    opts=dict(
+                        title='First {} example on {}'.format(i+1, dataset)
+                    )
+                )
 
     evaluator = ImageCropperEvaluator()
     evaluator.evaluate(ground_truth, pred, img_sizes)
