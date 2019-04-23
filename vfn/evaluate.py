@@ -9,12 +9,7 @@ from configs.parser import ConfigParser
 from vfn.data.datasets.evaluation import ImageCropperEvaluator
 from vfn.networks import backbones
 from vfn.networks.models import ViewFindingNet
-from vfn.utils.visualization import plot_bbox
-
-
-SLIDING_WINDOWS = 'sliding windows'
-GROUNDTRUTH = 'groundtruth'
-PREDICT = 'predict'
+from vfn.utils.visualization import ColorType, plot_bbox
 
 
 def generate_crop_annos_by_sliding_window(image):
@@ -73,9 +68,9 @@ def evaluate_on(dataset, model, device, env, examples=5):
             pred.append(crop_annos[idx])
 
             if i < examples:
-                image = plot_bbox(image, crop_annos, SLIDING_WINDOWS)
-                image = plot_bbox(image, [ground_truth[-1]], GROUNDTRUTH)
-                image = plot_bbox(image, [crop_annos[idx]], PREDICT)
+                image = plot_bbox(image, crop_annos, ColorType.SLIDING_WINDOWS)
+                image = plot_bbox(image, [ground_truth[-1]], ColorType.GROUNDTRUTH)
+                image = plot_bbox(image, [crop_annos[idx]], ColorType.PREDICT)
                 image_tensor = transforms.ToTensor()(image)
                 vis.image(image_tensor, env=env)
 

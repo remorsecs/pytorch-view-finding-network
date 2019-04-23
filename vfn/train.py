@@ -9,6 +9,7 @@ from tqdm import tqdm
 from visdom import Visdom
 
 from configs.parser import ConfigParser
+from vfn.utils.visualization import plot_bbox
 
 
 class Trainer:
