@@ -46,7 +46,7 @@ class Trainer:
     def _init_trainer(self):
         self.trainer = Engine(self._inference)
         self.trainer.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=True)
-        self.trainer.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
+        self.trainer.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration, is_train=True)
         self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=True)
         self.trainer.add_event_handler(Events.EPOCH_COMPLETED, self._run_validation)
         ckpt_handler = ModelCheckpoint(
@@ -60,11 +60,11 @@ class Trainer:
 
     def _init_validator(self):
         self.validator = Engine(self._inference)
-        self.validator.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage, is_train=False)
+        self.validator.add_event_handler(Events.EPOCH_STARTED, self._set_model_stage)
         self.validator.add_event_handler(Events.ITERATION_COMPLETED, self._log_iteration)
-        self.validator.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch, is_train=False)
+        self.validator.add_event_handler(Events.EPOCH_COMPLETED, self._log_epoch)
 
-    def _set_model_stage(self, engine, is_train):
+    def _set_model_stage(self, engine, is_train=False):
         self.model.train(is_train)
         torch.set_grad_enabled(is_train)
         engine.state.is_train = is_train
@@ -86,14 +86,31 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
+        engine.state.iteration_loss = loss.mean().item()
         engine.state.cum_average_loss += loss.mean().item()
 
-    def _log_iteration(self, engine):
+    def _log_iteration(self, engine, is_train=False):
         average_loss = engine.state.cum_average_loss / engine.state.iteration
         self.pbar.desc = self.desc.format(average_loss)
         self.pbar.update(self.log_interval)
 
-    def _log_epoch(self, engine, is_train):
+        if is_train:
+            self.vis.line(
+                Y=np.array([self.trainer.state.iteration_loss]),
+                X=np.array([self.trainer.state.iteration]),
+                win='loss-iteration',
+                env=self.configs.configs['checkpoint']['prefix'],
+                update='append',
+                name='train',
+                opts=dict(
+                    title='Learning Curve',
+                    showlegend=True,
+                    xlabel='Iteration',
+                    ylabel='Loss',
+                )
+            )
+
+    def _log_epoch(self, engine, is_train=False):
         stage = 'Training' if is_train else 'Validation'
         self.pbar.refresh()
         if is_train:
