@@ -37,10 +37,10 @@ class FlickrPro(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, i):
-        j = random.randint(0, 13)
+        # j = random.randint(0, 13)
         with Image.open(self.filenames[i]) as image:
             raw_image = image.convert('RGB')
-            x, y, w, h = self.annotations[i][j]
+            x, y, w, h = self.annotations[i]
             crop_image = raw_image.crop((x, y, x + w, y + h))
 
             if self.transforms:
@@ -80,12 +80,12 @@ class FlickrPro(Dataset):
             url = db[i]['url']
             self.urls.append(url)
             filename = os.path.join(self.root_dir, os.path.basename(url))
-            self.filenames.append(filename)
 
-            self.annotations.append([])
             for j in range(14):
-                self.annotations[i].append(db[i*14 + j]['crop'])
+                self.filenames.append(filename)
+                self.annotations.append(db[i*14 + j]['crop'])
 
+        print(len(self.filenames), len(self.urls), len(self.annotations))
         print('Unpacked', len(db), 'records.')
 
     def _check_integrity(self, root_dir):
@@ -94,5 +94,5 @@ class FlickrPro(Dataset):
 
 if __name__ == "__main__":
     print(os.getcwd())
-    flickr_pro = FlickrPro("../../../raw_images/flickr_pro", download=False)
-    # print(flickr_pro[0])
+    flickr_pro = FlickrPro("raw_images/flickr_pro", download=False)
+    print(flickr_pro[0])
