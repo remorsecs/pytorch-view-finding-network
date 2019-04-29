@@ -15,7 +15,7 @@ from vfn.data.datasets.evaluation import ImageCropperEvaluator
 class FCDB(Dataset):
     __meta_name = 'FCDB-%s.json'
 
-    def __init__(self, root_dir, subset='testing', download=True):
+    def __init__(self, root_dir, subset='all', download=True):
         super(FCDB, self).__init__()
         assert subset in ['training', 'testing', 'all'], 'Unknown subset {}' % subset
 
@@ -100,7 +100,7 @@ class FCDB(Dataset):
 
 
 def main():
-    db = FCDB("../../../FCDB", subset='all')
+    db = FCDB("/mnt/Data-2/Projects/faster-view-finding-network/FCDB", subset='all')
     _, img_sizes, ground_truth = db.get_all_items()
 
     evaluator = ImageCropperEvaluator()

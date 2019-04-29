@@ -78,7 +78,7 @@ def main():
 
     testsets = [
         configs.parse_FCDB(),
-        configs.parse_ICDB(),
+        # configs.parse_ICDB(),
     ]
     device = configs.parse_device()
     backbone = backbones.AlexNet()

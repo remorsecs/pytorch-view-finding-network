@@ -37,17 +37,20 @@ class FlickrPro(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, i):
-        # j = random.randint(0, 13)
-        with Image.open(self.filenames[i]) as image:
-            raw_image = image.convert('RGB')
-            x, y, w, h = self.annotations[i]
-            crop_image = raw_image.crop((x, y, x + w, y + h))
+        return self.filenames[i], self.annotations[i]
+        # with Image.open(self.filenames[i]) as image:
+        #     raw_image = image.convert('RGB')
+        #     x, y, w, h = self.annotations[i]
+        #     crop_image = raw_image.crop((x, y, x + w, y + h))
+        #
+        #     if self.transforms:
+        #         raw_image = self.transforms(raw_image)
+        #         crop_image = self.transforms(crop_image)
+        #
+        # return raw_image, crop_image
 
-            if self.transforms:
-                raw_image = self.transforms(raw_image)
-                crop_image = self.transforms(crop_image)
-
-        return raw_image, crop_image
+    def get_all_items(self):
+        return self.filenames, self.annotations, self.urls
 
     def _download_metadata(self):
         if not os.path.isdir(self.root_dir):
@@ -77,7 +80,7 @@ class FlickrPro(Dataset):
         self.urls = []
 
         for i in trange(len(db) // 14):
-            url = db[i]['url']
+            url = db[i*14]['url']
             self.urls.append(url)
             filename = os.path.join(self.root_dir, os.path.basename(url))
 
@@ -85,7 +88,7 @@ class FlickrPro(Dataset):
                 self.filenames.append(filename)
                 self.annotations.append(db[i*14 + j]['crop'])
 
-        print(len(self.filenames), len(self.urls), len(self.annotations))
+        # print(len(self.filenames), len(self.urls), len(self.annotations))
         print('Unpacked', len(db), 'records.')
 
     def _check_integrity(self, root_dir):
