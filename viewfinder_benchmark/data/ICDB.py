@@ -6,8 +6,8 @@ import cv2
 from tqdm import trange
 from collections import defaultdict
 from torch.utils.data import Dataset
-from vfn.data.datasets.ioutils import download, extract
-from vfn.data.datasets.evaluation import ImageCropperEvaluator
+from viewfinder_benchmark.data.ioutils import download, extract
+from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
 
 
 class ICDB(Dataset):

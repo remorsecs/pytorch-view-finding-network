@@ -7,9 +7,9 @@ import json
 import shutil
 from tqdm import trange
 from torch.utils.data import Dataset
-from vfn.data.datasets.ioutils import download
-from vfn.data.datasets.image_downloader import ImageDownloader
-from vfn.data.datasets.evaluation import ImageCropperEvaluator
+from viewfinder_benchmark.data.ioutils import download
+from viewfinder_benchmark.data.image_downloader import ImageDownloader
+from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
 
 
 class FCDB(Dataset):

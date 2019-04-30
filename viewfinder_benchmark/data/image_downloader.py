@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import os
 from tqdm import trange
-from vfn.data.datasets.ioutils import download
+from viewfinder_benchmark.data.ioutils import download
 
 
 class ImageDownloader(object):

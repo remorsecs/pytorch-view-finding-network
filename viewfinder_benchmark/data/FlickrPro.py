@@ -8,8 +8,8 @@ import random
 from PIL import Image
 from torch.utils.data import Dataset
 from tqdm import trange
-from vfn.data.datasets.image_downloader import ImageDownloader
-from vfn.data.datasets.ioutils import download
+from viewfinder_benchmark.data.image_downloader import ImageDownloader
+from viewfinder_benchmark.data.ioutils import download
 
 
 class FlickrPro(Dataset):

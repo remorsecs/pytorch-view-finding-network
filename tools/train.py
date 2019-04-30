@@ -8,7 +8,7 @@ from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
 from visdom import Visdom
 
-from configs.parser import ConfigParser
+from viewfinder_benchmark.config.parser import ConfigParser
 
 
 class Trainer:

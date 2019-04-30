@@ -7,14 +7,14 @@ import yaml
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 
-import vfn.networks.backbones as backbones
-import vfn.networks.losses as losses
-import vfn.networks.models as models
+import viewfinder_benchmark.network.backbones as backbones
+import viewfinder_benchmark.network.losses as losses
+import viewfinder_benchmark.network.models as models
 
-from vfn.data.datasets.FlickrPro import FlickrPro
-from vfn.data.datasets.FCDB import FCDB
-from vfn.data.datasets.ICDB import ICDB
-from vfn.data.datasets.dataset import ImagePairDataset
+from viewfinder_benchmark.data.FlickrPro import FlickrPro
+from viewfinder_benchmark.data.FCDB import FCDB
+from viewfinder_benchmark.data.ICDB import ICDB
+from viewfinder_benchmark.data.dataset import ImagePairDataset
 
 
 class ConfigParser:

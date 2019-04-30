@@ -4,10 +4,10 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import trange
 
-from configs.parser import ConfigParser
-from vfn.networks import backbones
-from vfn.networks.models import ViewFindingNet
-from vfn.data.datasets.evaluation import ImageCropperEvaluator
+from viewfinder_benchmark.config.parser import ConfigParser
+from viewfinder_benchmark.network import backbones
+from viewfinder_benchmark.network.models import ViewFindingNet
+from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
 
 
 def generate_crop_annos_by_sliding_window(image):
