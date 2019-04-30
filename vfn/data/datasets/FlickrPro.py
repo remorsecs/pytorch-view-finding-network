@@ -20,10 +20,8 @@ class FlickrPro(Dataset):
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
         self.transforms = transforms
+        self._download_metadata()
         self._fetch_metadata()
-
-        if os.path.exists(self.meta_file):
-            self._download_metadata()
 
         if download:
             self._download_images()
