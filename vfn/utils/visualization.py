@@ -32,8 +32,3 @@ def plot_bbox(
         draw.rectangle([x, y, x1, y1], outline=bbox_type.value, width=2)
 
     return image
-
-
-class Visualizer:
-
-    pass
