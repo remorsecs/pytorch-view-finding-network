@@ -1,19 +1,54 @@
 ---
+checkpoint:
+  root_dir: 'ckpt/'
+  prefix: 'exp02'
+
+weight: 'ckpt/exp01.pth'
+
+device: 'cuda:0'  # or 'cpu'
+
+model:
+  backbone:
+    name: 'AlexNet'
+    pretrained: True
+
 train:
+  num_epochs: 100
+
   optimizer:
-    - class: 'SGD',
-      lr: 1e-3,
-      momentum: 0.9,
+    name: 'Adam'
+    lr: 0.001
+  #  momentum: 0.9
+
+  # not used!
   lr_scheduler:
-    - class: 'StepLR',
-      step_size: 10,
-      gamma: 0.1,
-  criterion:  # need design
-    - class: ''
+    name: 'StepLR'
+    step_size: 10
+    gamma: 0.1
+
+  loss:
+    name: 'hinge'
+
+  dataset:
+    name: 'FlickrPro'
+    root_dir: 'raw_images/flickr_pro'
+    train_size: 17000
+
   dataloader:
-    - batch_size: 100,
-      shuffle: True,
-  device:
-    id: [0, 1, 2, 3]  # or 'cpu'
+    batch_size: 100
+    shuffle: True
 
+validation:
+  dataloader:
+    batch_size: 100
+    shuffle: False
 
+evaluate:
+  FCDB:
+    root_dir: 'FCDB'
+    download: False
+
+  ICDB:
+    root_dir: 'ICDB'
+    download: False
+...

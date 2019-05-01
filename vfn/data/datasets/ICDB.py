@@ -4,9 +4,10 @@ from __future__ import print_function
 import os
 import cv2
 from tqdm import trange
+from collections import defaultdict
 from torch.utils.data import Dataset
-from ioutils import download, extract
-from evaluation import ImageCropperEvaluator
+from vfn.data.datasets.ioutils import download, extract
+from vfn.data.datasets.evaluation import ImageCropperEvaluator
 
 
 class ICDB(Dataset):
@@ -25,14 +26,25 @@ class ICDB(Dataset):
         if download:
             self._download(root_dir)
 
-        self.img_list, self.img_sizes, self.annotations = self._fetch_metadata()
+        self.img_list, self.img_sizes, self.crops, self.category = self._fetch_metadata()
+        self.img_groups, self.crop_groups, self. size_groups = self._group_metadata()
         self._check_integrity(root_dir)
 
     def __len__(self):
         return len(self.img_list)
 
     def __getitem__(self, index):
-        return self.img_list[index], self.img_sizes[index], self.annotations[index]
+        return self.img_list[index], self.img_sizes[index], self.crops[index], self.category[index]
+
+    def __str__(self):
+        return 'ICDB dataset'
+
+    def get_metadata_by_group(self, label):
+        assert label in self.img_groups.keys(), 'Unknown category %s' % label
+        return self.img_groups[label], self.crop_groups[label], self.size_groups[label]
+
+    def get_categories(self):
+        return self.img_groups.keys()
 
     def _download(self, root_dir):
         if not os.path.isdir(root_dir):
@@ -60,34 +72,45 @@ class ICDB(Dataset):
         with open(annotation_file, 'r') as f:
             lines = f.readlines()
 
-        # TODO: handle category
         print('Reading metadata...')
         num_images = round(len(lines) / 4)
-        img_list, img_sizes, annotations = [], [], []
+        img_list, img_sizes, annotations, category = [], [], [], []
         for i in trange(num_images):
-            filename = lines[i*4].strip().split('\\')[1]
+            label, filename = lines[i*4].strip().split('\\')
             crop = [int(x) for x in lines[i*4 + self.subset].split(' ')]
             # convert from (y1, y2, x1, x2) to (x, y, w, h) format
             annotations.append([crop[2], crop[0], crop[3] - crop[2], crop[1] - crop[0]])
-            img_list.append(filename)
-            height, width = cv2.imread(os.path.join(self.image_dir, img_list[-1])).shape[:2]
+            img_path = os.path.join(self.image_dir, filename)
+            img_list.append(img_path)
+            height, width = cv2.imread(os.path.join(self.image_dir, filename)).shape[:2]
             img_sizes.append((width, height))
+            category.append(label)
 
-        return img_list, img_sizes, annotations
+        return img_list, img_sizes, annotations, category
+
+    def _group_metadata(self):
+        img_groups, crop_groups, size_groups = defaultdict(list), defaultdict(list), defaultdict(list)
+        for img, size, crop, label in zip(self.img_list, self.img_sizes, self.crops, self.category):
+            img_groups[label].append(img)
+            crop_groups[label].append(crop)
+            size_groups[label].append(size)
+        return img_groups, crop_groups, size_groups
 
     def _check_integrity(self, root_dir):
         pass
 
 
-if __name__ == "__main__":
+def main():
     db = ICDB("../../../ICDB")
+    print(db[0])
 
-    ground_truth, img_sizes = [], []
-    for i in range(len(db)):
-        filename, size, crop = db[i]
-        ground_truth.append(crop)
-        img_sizes.append(size)
+    _, crops, sizes = db.get_metadata_by_group('animal')
+    print(db.get_categories())
 
     evaluator = ImageCropperEvaluator()
     # evaluate ground truth, this should get perfect results
-    evaluator.evaluate(ground_truth, ground_truth, img_sizes)
+    evaluator.evaluate(crops, crops, sizes)
+
+
+if __name__ == "__main__":
+    main()

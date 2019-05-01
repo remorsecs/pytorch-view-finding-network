@@ -11,14 +11,18 @@ else:
     from urllib import urlretrieve
 
 
-def download(url, filename):
+def download(url, filename, verbose=True):
     r"""Download file from the internet.
     
     Args:
         url (string): URL of the internet file.
         filename (string): Path to store the downloaded file.
+        verbose (bool): Show download progress.
     """
-    return urlretrieve(url, filename, _reporthook)
+    if verbose:
+        return urlretrieve(url, filename, _reporthook)
+    else:
+        return urlretrieve(url, filename)
 
 
 def _reporthook(count, block_size, total_size):

@@ -17,15 +17,10 @@ class FlickrPro(Dataset):
 
     def __init__(self, root_dir, download=True, transforms=None,):
         super(FlickrPro, self).__init__()
-        random.seed()
-
         self.root_dir = root_dir
         self.meta_file = os.path.join(root_dir, self.__meta_name)
         self.transforms = transforms
-
-        if download:
-            self._download_metadata()
-
+        self._download_metadata()
         self._fetch_metadata()
 
         if download:
@@ -37,11 +32,10 @@ class FlickrPro(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, i):
-        j = random.randint(0, 13)
         with Image.open(self.filenames[i]) as image:
             raw_image = image.convert('RGB')
-            x, y, w, h = self.annotations[i][j]
-            crop_image = raw_image.crop((x, y, x + w, y + h))
+            x, y, w, h = self.annotations[i]
+            crop_image = raw_image.crop((x, y, x+w, y+h))
 
             if self.transforms:
                 raw_image = self.transforms(raw_image)
@@ -62,7 +56,7 @@ class FlickrPro(Dataset):
 
     def _download_images(self):
         print('Downloading FlickrPro images...')
-        ImageDownloader(self.root_dir, self.urls).download()
+        ImageDownloader.download(self.root_dir, self.urls)
         print('Done')
 
     def _fetch_metadata(self):
@@ -76,15 +70,15 @@ class FlickrPro(Dataset):
         self.annotations = []
         self.urls = []
 
-        for i in trange(len(db) // 14):
+        for i in trange(len(db)):
             url = db[i]['url']
             self.urls.append(url)
+
             filename = os.path.join(self.root_dir, os.path.basename(url))
             self.filenames.append(filename)
 
-            self.annotations.append([])
-            for j in range(14):
-                self.annotations[i].append(db[i*14 + j]['crop'])
+            crop = db[i]['crop']
+            self.annotations.append(crop)
 
         print('Unpacked', len(db), 'records.')
 
