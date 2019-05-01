@@ -2,7 +2,7 @@ from typing import Type, TypeVar
 
 import torch
 import torch.nn as nn
-from vfn.networks.backbones import Backbone
+from viewfinder_benchmark.networks.backbones import Backbone
 
 
 class ViewFindingNet(nn.Module):

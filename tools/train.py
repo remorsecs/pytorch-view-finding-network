@@ -8,11 +8,11 @@ from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
 from visdom import Visdom
 
-from configs.parser import ConfigParser
-from vfn.utils.visualization import plot_bbox
+from viewfinder_benchmark.config.parser import ConfigParser
+from viewfinder_benchmark.utils.visualization import plot_bbox
 
 
-class Trainer:
+class Trainer(object):
 
     def __init__(self, configs):
         self.configs = configs

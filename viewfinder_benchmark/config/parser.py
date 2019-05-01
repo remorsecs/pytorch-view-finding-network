@@ -4,16 +4,18 @@ import torch
 import torch.optim as optim
 import yaml
 
-from torch.utils.data import DataLoader, random_split
+from gulpio.loader import DataLoader
+from torch.utils.data import random_split
 from torchvision import transforms
 
-import vfn.networks.backbones as backbones
-import vfn.networks.losses as losses
-import vfn.networks.models as models
+import viewfinder_benchmark.network.backbones as backbones
+import viewfinder_benchmark.network.losses as losses
+import viewfinder_benchmark.network.models as models
 
-from vfn.data.datasets.FlickrPro import FlickrPro
-from vfn.data.datasets.FCDB import FCDB
-from vfn.data.datasets.ICDB import ICDB
+from viewfinder_benchmark.data.FlickrPro import FlickrPro
+from viewfinder_benchmark.data.FCDB import FCDB
+from viewfinder_benchmark.data.ICDB import ICDB
+from viewfinder_benchmark.data.dataset import ImagePairDataset
 
 
 class ConfigParser:
@@ -74,20 +76,25 @@ class ConfigParser:
             dataset_cls = FlickrPro
 
         data_transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize((self.input_dim, self.input_dim)),
             transforms.ToTensor(),
         ])
 
-        dataset = dataset_cls(root_dir=self.configs['train']['dataset']['root_dir'],
-                              transforms=data_transform)
-        train_size = self.configs['train']['dataset']['train_size'] * 14
+        # src_dataset = dataset_cls(root_dir=self.configs['train']['dataset']['root_dir'],
+        #                       transforms=data_transform)
+        dataset = ImagePairDataset(self.configs['train']['dataset']['gulpio_dir'],
+                                   data_transform)
+        train_size = self.configs['train']['dataset']['train_size']
+        print('train_size:', train_size)
         val_size = len(dataset) - train_size
-        # print('len(dataset) = {}, train_size = {}, val_size = {}.'.format(len(dataset), train_size, val_size))
+        print('val_size:', val_size)
+
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
         data_loaders = dict(
-            train=DataLoader(train_dataset, **self.configs['train']['dataloader']),
-            val=DataLoader(val_dataset, **self.configs['validation']['dataloader']),
+            train=DataLoader(train_dataset, **self.configs['train']['dataloader'], num_workers=8),
+            val=DataLoader(val_dataset, **self.configs['validation']['dataloader'], num_workers=8),
         )
         return data_loaders
 

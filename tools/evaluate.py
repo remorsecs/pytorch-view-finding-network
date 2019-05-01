@@ -5,11 +5,11 @@ from torchvision import transforms
 from tqdm import trange
 from visdom import Visdom
 
-from configs.parser import ConfigParser
-from vfn.data.datasets.evaluation import ImageCropperEvaluator
-from vfn.networks import backbones
-from vfn.networks.models import ViewFindingNet
-from vfn.utils.visualization import ColorType, plot_bbox
+from viewfinder_benchmark.config.parser import ConfigParser
+from viewfinder_benchmark.network import backbones
+from viewfinder_benchmark.network.models import ViewFindingNet
+from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
+from viewfinder_benchmark.utils.visualization import ColorType, plot_bbox
 
 
 def generate_crop_annos_by_sliding_window(image):
@@ -93,7 +93,7 @@ def main():
 
     testsets = [
         configs.parse_FCDB(),
-        configs.parse_ICDB(),
+        # configs.parse_ICDB(),
     ]
     device = configs.parse_device()
     backbone = backbones.AlexNet()

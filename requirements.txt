@@ -5,3 +5,4 @@ tqdm
 scikit-learn
 pyyaml
 opencv-python
+gulpio
