@@ -3,11 +3,13 @@ import torch
 from PIL import Image
 from torchvision import transforms
 from tqdm import trange
+from visdom import Visdom
 
 from configs.parser import ConfigParser
+from vfn.data.datasets.evaluation import ImageCropperEvaluator
 from vfn.networks import backbones
 from vfn.networks.models import ViewFindingNet
-from vfn.data.datasets.evaluation import ImageCropperEvaluator
+from vfn.utils.visualization import ColorType, plot_bbox
 
 
 def generate_crop_annos_by_sliding_window(image):
@@ -28,9 +30,10 @@ def generate_crop_annos_by_sliding_window(image):
     return crop_annos
 
 
-def evaluate_on(dataset, model, device):
+def evaluate_on(dataset, model, device, env, examples=5):
     print('Evaluate on {}.'.format(dataset))
 
+    vis = Visdom()
     data_transforms = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -61,9 +64,21 @@ def evaluate_on(dataset, model, device):
                 scores.append(score)
 
             scores = torch.tensor(scores)
+            idx = scores.argmax().item()
+            pred.append(crop_annos[idx])
 
-        idx = scores.argmax().item()
-        pred.append(crop_annos[idx])
+            if i < examples:
+                image = plot_bbox(image, crop_annos, ColorType.SLIDING_WINDOWS)
+                image = plot_bbox(image, [ground_truth[-1]], ColorType.GROUNDTRUTH)
+                image = plot_bbox(image, [crop_annos[idx]], ColorType.PREDICT)
+                image_tensor = transforms.ToTensor()(image)
+                vis.image(
+                    image_tensor,
+                    env=env,
+                    opts=dict(
+                        title='First {} example on {}'.format(i+1, dataset)
+                    )
+                )
 
     evaluator = ImageCropperEvaluator()
     evaluator.evaluate(ground_truth, pred, img_sizes)
@@ -82,11 +97,12 @@ def main():
     ]
     device = configs.parse_device()
     backbone = backbones.AlexNet()
-    model = ViewFindingNet(backbone)
-    model.load_state_dict(torch.load(configs.configs['weight']))
-    model.to(device)
+    weight = torch.load(configs.configs['weight'], map_location=lambda storage, loc: storage)
+    model = ViewFindingNet(backbone).to(device)
+    model.load_state_dict(weight)
+
     for testset in testsets:
-        evaluate_on(testset, model, device)
+        evaluate_on(testset, model, device, configs.configs['checkpoint']['prefix'])
 
 
 if __name__ == '__main__':

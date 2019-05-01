@@ -80,8 +80,9 @@ class ConfigParser:
 
         dataset = dataset_cls(root_dir=self.configs['train']['dataset']['root_dir'],
                               transforms=data_transform)
-        train_size = self.configs['train']['dataset']['train_size']
+        train_size = self.configs['train']['dataset']['train_size'] * 14
         val_size = len(dataset) - train_size
+        # print('len(dataset) = {}, train_size = {}, val_size = {}.'.format(len(dataset), train_size, val_size))
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
         data_loaders = dict(
