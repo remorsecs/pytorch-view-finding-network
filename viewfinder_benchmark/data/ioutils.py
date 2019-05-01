@@ -5,6 +5,7 @@ import os
 import shutil
 import zipfile
 import sys
+import urllib
 if sys.version_info[0] == 3:
     from urllib.request import urlretrieve
 else:
@@ -19,10 +20,13 @@ def download(url, filename, verbose=True):
         filename (string): Path to store the downloaded file.
         verbose (bool): Show download progress.
     """
-    if verbose:
-        return urlretrieve(url, filename, _reporthook)
-    else:
-        return urlretrieve(url, filename)
+    try:
+        if verbose:
+            return urlretrieve(url, filename, _reporthook)
+        else:
+            return urlretrieve(url, filename)
+    except urllib.error.HTTPError as e:
+        print(e)
 
 
 def _reporthook(count, block_size, total_size):

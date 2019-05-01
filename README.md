@@ -7,6 +7,12 @@
 - Python 3.7
 - PyTorch 1.0
 
+### Installation
+
+```bash
+python setup.py build develop
+```
+
 ### Usage
 
 Before training, start Visdom server for visualization from the command 
