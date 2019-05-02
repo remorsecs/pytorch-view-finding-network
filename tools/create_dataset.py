@@ -19,12 +19,12 @@ def parse_args():
                         help="num of workers. -x uses (all - x) cores [-1 default].")
     parser.add_argument('-l', '--image_list', type=str,
                         help='text file which contains the list of images')
-    parser.add_argument('-o', '--output_folder', type=str, default='gulpio',
+    parser.add_argument('-o', '--output_folder', type=str, default='../gulpio',
                         help='output folder for GulpIO files')
     parser.add_argument('-r', '--root_folder', type=str,
                         help='root image folder')
-    parser.add_argument('-n', '--images_per_chunk', type=int, default=64,
-                        help='number of images in one chunk [default: 1024]')
+    parser.add_argument('-n', '--images_per_chunk', type=int, default=2048,
+                        help='number of images in one chunk [default: 2048]')
     parser.add_argument('-S', '--image_size', type=int, default=-1,
                         help='size of smaller edge of resized frames [default: -1 (no resizing)]')
     parser.add_argument('-s', '--shuffle', action='store_true',
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     else:
         check_existing_dataset(output_folder)
 
-        adapter = ImagePairListAdapter(FlickrPro("raw_images/flickr_pro"))
+        adapter = ImagePairListAdapter(FlickrPro("../raw_images/flickr_pro"))
 
         ingestor = GulpIngestor(adapter, output_folder, images_per_chunk, num_workers)
         ingestor()  # call to trigger ingestion

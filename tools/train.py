@@ -16,6 +16,7 @@ class Trainer(object):
 
     def __init__(self, configs):
         self.configs = configs
+        self.viz = self.configs.configs['train']['viz']
         self._init_config_settings()
         self._init_logger()
         self._init_trainer()
@@ -41,7 +42,8 @@ class Trainer(object):
             ascii=True,
         )
         self.log_interval = 1
-        self.vis = Visdom()
+        if self.viz:
+            self.vis = Visdom()
 
     def _init_trainer(self):
         self.trainer = Engine(self._inference)
@@ -94,7 +96,7 @@ class Trainer(object):
         self.pbar.desc = self.desc.format(average_loss)
         self.pbar.update(self.log_interval)
 
-        if is_train:
+        if is_train and self.viz:
             self.vis.line(
                 Y=np.array([self.trainer.state.iteration_loss]),
                 X=np.array([self.trainer.state.iteration]),
@@ -119,20 +121,21 @@ class Trainer(object):
         average_loss = engine.state.cum_average_loss / engine.state.iteration
         tqdm.write('{} Loss: {:.6f}'.format(stage, average_loss))
         self.pbar.n = self.pbar.last_print_n = 0
-        self.vis.line(
-            Y=np.array([average_loss]),
-            X=np.array([self.trainer.state.epoch]),
-            win='loss-epoch',
-            env=self.configs.configs['checkpoint']['prefix'],
-            update='append',
-            name=stage,
-            opts=dict(
-                title='Learning Curve',
-                showlegend=True,
-                xlabel='Epoch',
-                ylabel='Loss',
+        if self.viz:
+            self.vis.line(
+                Y=np.array([average_loss]),
+                X=np.array([self.trainer.state.epoch]),
+                win='loss-epoch',
+                env=self.configs.configs['checkpoint']['prefix'],
+                update='append',
+                name=stage,
+                opts=dict(
+                    title='Learning Curve',
+                    showlegend=True,
+                    xlabel='Epoch',
+                    ylabel='Loss',
+                )
             )
-        )
 
     def _run_validation(self, engine):
         self.validator.run(self.data_loaders['val'])

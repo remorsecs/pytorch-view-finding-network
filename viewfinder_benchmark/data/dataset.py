@@ -11,17 +11,14 @@ class ImagePairListAdapter(AbstractDatasetAdapter):
     def __init__(self, src_dataset):
         self.source_dataset = src_dataset
         self.data = self._parse_dataset()
-        import random
-        random.shuffle(self.data)
 
     def __len__(self):
-        # return len(self.flickr_pro)
-        return 500
+        return len(self.source_dataset)
 
     def _parse_dataset(self):
         filenames, annotations, _ = self.source_dataset.get_all_items()
         data = []
-        for i, (filename, annotation) in enumerate(zip(filenames[:500], annotations[:500])):
+        for i, (filename, annotation) in enumerate(zip(filenames, annotations)):
             data.append({'id': i,
                          'filename': filename,
                          'annotation': annotation})
@@ -32,12 +29,10 @@ class ImagePairListAdapter(AbstractDatasetAdapter):
         slice_data = self.data[slice_element]
         for item in slice_data:
             try:
-                # print(item['filename'])
                 image = cv2.imread(item['filename'])
                 img_full = np.copy(image)
                 x, y, w, h = item['annotation']
                 img_crop = np.copy(image[y:y+h, x:x+w, :])
-                # print(img_full.shape, img_crop.shape)
                 if 0 in img_crop.shape:
                     print(img_full.shape)
                     print(item['annotation'])

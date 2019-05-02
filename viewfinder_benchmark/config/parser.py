@@ -4,8 +4,7 @@ import torch
 import torch.optim as optim
 import yaml
 
-from gulpio.loader import DataLoader
-from torch.utils.data import random_split
+from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 
 import viewfinder_benchmark.network.backbones as backbones
@@ -78,6 +77,8 @@ class ConfigParser:
         data_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((self.input_dim, self.input_dim)),
+            transforms.RandomHorizontalFlip(),
+            # transforms.ColorJitter(brightness=0.01, contrast=0.05),
             transforms.ToTensor(),
         ])
 
@@ -93,8 +94,8 @@ class ConfigParser:
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
         data_loaders = dict(
-            train=DataLoader(train_dataset, **self.configs['train']['dataloader'], num_workers=8),
-            val=DataLoader(val_dataset, **self.configs['validation']['dataloader'], num_workers=8),
+            train=DataLoader(train_dataset, num_workers=8, **self.configs['train']['dataloader']),
+            val=DataLoader(val_dataset, num_workers=8, **self.configs['validation']['dataloader']),
         )
         return data_loaders
 
