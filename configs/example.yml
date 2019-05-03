@@ -14,7 +14,7 @@ model:
 
 train:
   num_epochs: 15
-  viz: False
+  viz: True
 
   optimizer:
     name: 'Adam'
@@ -25,19 +25,25 @@ train:
 
   dataset:
     name: 'FlickrPro'
-    root_dir: '../raw_images/flickr_pro'
-    gulpio_dir: '../gulpio'
-    train_size: 238000
+    root_dir: '../datasets/FlickrPro/src/'
+    gulpio_dir: '../datasets/FlickrPro/train/'
 
-  dataloader:
-    batch_size: 128
-    shuffle: True
-
-validation:
-  viz: False
   dataloader:
     batch_size: 128
     shuffle: False
+
+validation:
+  viz: True
+
+  dataset:
+    name: 'FlickrPro'
+    root_dir: '../datasets/FlickrPro/src/'
+    gulpio_dir: '../datasets/FlickrPro/val/'
+
+  dataloader:
+    batch_size: 128
+    shuffle: False
+
 
 evaluate:
   FCDB:

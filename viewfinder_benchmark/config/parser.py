@@ -33,7 +33,7 @@ class ConfigParser:
 
     def _load(self, config_file):
         with open(config_file, 'r') as f:
-            self.configs = yaml.load(f)
+            self.configs = yaml.load(f, Loader=yaml.BaseLoader)
 
     def get_model_name(self):
         return self.backbone_name
@@ -70,28 +70,35 @@ class ConfigParser:
         return loss_fn
 
     def parse_dataloader(self):
-        dataset_cls = None
-        if self.dataset_name == 'FlickrPro':
-            dataset_cls = FlickrPro
+        # dataset_cls = None
+        # if self.dataset_name == 'FlickrPro':
+        #     dataset_cls = FlickrPro
 
         data_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((self.input_dim, self.input_dim)),
-            transforms.RandomHorizontalFlip(),
+            # transforms.RandomHorizontalFlip(),
             # transforms.ColorJitter(brightness=0.01, contrast=0.05),
             transforms.ToTensor(),
         ])
 
         # src_dataset = dataset_cls(root_dir=self.configs['train']['dataset']['root_dir'],
         #                       transforms=data_transform)
-        dataset = ImagePairDataset(self.configs['train']['dataset']['gulpio_dir'],
-                                   data_transform)
-        train_size = self.configs['train']['dataset']['train_size']
-        print('train_size:', train_size)
-        val_size = len(dataset) - train_size
-        print('val_size:', val_size)
 
-        train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+        train_dataset = ImagePairDataset(self.configs['train']['dataset']['gulpio_dir'],
+                                         data_transform)
+        val_dataset = ImagePairDataset(self.configs['validation']['dataset']['gulpio_dir'],
+                                       data_transform)
+
+        # train_size = self.configs['train']['dataset']['train_size']
+        print('train_size:', len(train_dataset))
+        # val_size = len(dataset) - train_size
+        print('val_size:', len(val_dataset))
+
+        # train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+        # print(self.configs['train']['dataloader'])
+        # print(self.configs['validation']['dataloader'])
 
         data_loaders = dict(
             train=DataLoader(train_dataset, num_workers=8, **self.configs['train']['dataloader']),
