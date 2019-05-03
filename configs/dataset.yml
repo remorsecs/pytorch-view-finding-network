@@ -1,0 +1,23 @@
+---
+FlickrPro:
+  train:
+    meta: '../data/flickr_pro_train.pkl'
+    root_dir: '../datasets/FlickrPro/src'
+    gulpio_dir: '../datasets/FlickrPro/train'
+    download: False
+  val:
+    meta: '../data/flickr_pro_val.pkl'
+    root_dir: '../datasets/FlickrPro/src'
+    gulpio_dir: '../datasets/FlickrPro/val'
+    download: False
+
+FCDB:
+  test:
+    root_dir: '../datasets/FCDB'
+    download: False
+
+ICDB:
+  test:
+    root_dir: '../datasets/ICDB'
+    download: False
+...

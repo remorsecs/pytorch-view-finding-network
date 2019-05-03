@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import random
 
 from torch.utils.data import Dataset
 from gulpio.adapters import AbstractDatasetAdapter
@@ -8,9 +9,11 @@ from gulpio.dataset import GulpDirectory, GulpIOEmptyFolder
 
 
 class ImagePairListAdapter(AbstractDatasetAdapter):
-    def __init__(self, src_dataset):
+    def __init__(self, src_dataset, shuffle=True):
         self.source_dataset = src_dataset
         self.data = self._parse_dataset()
+        if shuffle:
+            random.shuffle(self.data)
 
     def __len__(self):
         return len(self.source_dataset)

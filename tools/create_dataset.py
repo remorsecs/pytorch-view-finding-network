@@ -5,6 +5,7 @@ import cv2
 import argparse
 import shutil
 import multiprocessing
+import yaml
 from gulpio.fileio import GulpIngestor
 from gulpio.dataset import GulpDirectory
 from gulpio.loader import DataLoader
@@ -17,12 +18,12 @@ def parse_args():
         description='Create image pair data for training trackers using GulpIO.')
     parser.add_argument('-w', '--workers', type=int, default=-1,
                         help="num of workers. -x uses (all - x) cores [-1 default].")
-    parser.add_argument('-l', '--image_list', type=str,
-                        help='text file which contains the list of images')
-    parser.add_argument('-o', '--output_folder', type=str, default='../gulpio',
-                        help='output folder for GulpIO files')
+    parser.add_argument('-c', '--config', type=str, default='../configs/dataset.yml',
+                        help='configuration file')
+    parser.add_argument('-N', '--name', type=str, default='FlickrPro',
+                        help='Dataset name [default: "FlickrPro"]')
     parser.add_argument('-r', '--root_folder', type=str,
-                        help='root image folder')
+                        help='root folder of GulpIO data')
     parser.add_argument('-n', '--images_per_chunk', type=int, default=2048,
                         help='number of images in one chunk [default: 2048]')
     parser.add_argument('-S', '--image_size', type=int, default=-1,
@@ -36,6 +37,16 @@ def parse_args():
     return args
 
 
+def parse_config(config_path, name):
+    with open(config_path, 'r') as f:
+        config = yaml.load(f, Loader=yaml.BaseLoader)
+
+    if name not in config:
+        raise Exception('Unrecognized dataset {}'.format(name))
+
+    return config
+
+
 def check_existing_dataset(data_path):
     gd = GulpDirectory(data_path)
     if gd.num_chunks > 0:
@@ -47,6 +58,7 @@ def check_existing_dataset(data_path):
         if action == 'y':
             shutil.rmtree(data_path)
         elif action == 'n':
+            "Exiting. Nothing changed."
             sys.exit()
 
 
@@ -57,16 +69,15 @@ if __name__ == "__main__":
     if num_workers < 0:
         num_workers = multiprocessing.cpu_count() + num_workers
 
-    image_list_file = args.image_list
-    output_folder = args.output_folder
+    config = parse_config(args.config, args.name)
+
+    # image_list_file = args.image_list
     images_per_chunk = args.images_per_chunk
     img_size = args.image_size
-    root_path = args.root_folder
-    shuffle = args.shuffle
     viz = args.viz
 
     if viz:
-        dataset = ImagePairVisDataset(output_folder)
+        dataset = ImagePairVisDataset(args.root_folder)
         loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, drop_last=False)
         print("data size:", len(dataset))
 
@@ -77,9 +88,18 @@ if __name__ == "__main__":
             if key == 27:
                 break
     else:
-        check_existing_dataset(output_folder)
+        for subset in ['train', 'val']:
+            check_existing_dataset(config[args.name][subset]['gulpio_dir'])
 
-        adapter = ImagePairListAdapter(FlickrPro("../raw_images/flickr_pro"))
+            adapter = ImagePairListAdapter(
+                FlickrPro(
+                    config[args.name][subset]['root_dir'],
+                    config[args.name][subset]['meta'],
+                    config[args.name][subset]['download']
+                ),
+                # args.shuffle
+            )
 
-        ingestor = GulpIngestor(adapter, output_folder, images_per_chunk, num_workers)
-        ingestor()  # call to trigger ingestion
+            ingestor = GulpIngestor(adapter, config[args.name][subset]['gulpio_dir'], images_per_chunk, num_workers)
+            ingestor()  # call to trigger ingestion
+

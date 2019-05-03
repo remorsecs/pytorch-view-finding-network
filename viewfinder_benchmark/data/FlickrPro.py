@@ -11,14 +11,14 @@ from viewfinder_benchmark.data.ioutils import download
 
 
 class FlickrPro(Dataset):
-    __meta_name = 'flickr_pro.pkl'
+    # __meta_name = 'flickr_pro.pkl'
 
-    def __init__(self, root_dir, download=True, transforms=None,):
+    def __init__(self, root_dir, meta_file, download=False):
         super(FlickrPro, self).__init__()
         self.root_dir = root_dir
-        self.meta_file = os.path.join(root_dir, self.__meta_name)
-        self.transforms = transforms
-        self._download_metadata()
+        # self.meta_file = os.path.join(root_dir, self.__meta_name)
+        self.meta_file = meta_file
+        # self._download_metadata()
         self._fetch_metadata()
 
         if download:
@@ -31,16 +31,6 @@ class FlickrPro(Dataset):
 
     def __getitem__(self, i):
         return self.filenames[i], self.annotations[i]
-        # with Image.open(self.filenames[i]) as image:
-        #     raw_image = image.convert('RGB')
-        #     x, y, w, h = self.annotations[i]
-        #     crop_image = raw_image.crop((x, y, x + w, y + h))
-        #
-        #     if self.transforms:
-        #         raw_image = self.transforms(raw_image)
-        #         crop_image = self.transforms(crop_image)
-        #
-        # return raw_image, crop_image
 
     def get_all_items(self):
         return self.filenames, self.annotations, self.urls
@@ -57,6 +47,9 @@ class FlickrPro(Dataset):
             print('Done')
 
     def _download_images(self):
+        if not os.path.isdir(self.root_dir):
+            os.makedirs(self.root_dir)
+
         print('Downloading FlickrPro images...')
         ImageDownloader.download(self.root_dir, self.urls)
         print('Done')
