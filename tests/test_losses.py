@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import torch
 
-from vfn.networks.losses import hinge_loss
+from viewfinder_benchmark.network.losses import hinge_loss
 
 
 def test_svm_loss():
