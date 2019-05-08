@@ -83,6 +83,8 @@ class ImagePairDataset(Dataset):
         img, meta = self.gd[item_id]
         img_full, img_crop = img
 
+        # TODO: check RGB vs. BGR consistency
+
         if self.transforms:
             img_full = self.transforms(img_full)
             img_crop = self.transforms(img_crop)

@@ -4,6 +4,8 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import trange
 from visdom import Visdom
+import json
+import os
 
 from viewfinder_benchmark.config.parser import ConfigParser
 from viewfinder_benchmark.network import backbones
@@ -39,6 +41,9 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
     ])
+
+    sliding_windows = json.load(open('../data/FCDB_sliding_windows.json', 'r'))
+
     ground_truth, img_sizes, pred = [], [], []
     for i in trange(len(dataset), ascii=True):
         data = dataset[i]
@@ -48,10 +53,12 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
 
         with Image.open(filename) as image:
             image = image.convert('RGB')
-            crop_annos = generate_crop_annos_by_sliding_window(image)
+            # crop_annos = generate_crop_annos_by_sliding_window(image)
 
             # add groundtruth
-            crop_annos.append(crop)
+            # crop_annos.append(crop)
+
+            crop_annos = sliding_windows[os.path.basename(filename)]
 
             scores = []
             for crop_anno in crop_annos:
