@@ -15,7 +15,7 @@ from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
 class FCDB(Dataset):
     __meta_name = 'FCDB-%s.json'
 
-    def __init__(self, root_dir, subset='all', download=True):
+    def __init__(self, root_dir, subset='testing', download=True):
         super(FCDB, self).__init__()
         assert subset in ['training', 'testing', 'all'], 'Unknown subset {}' % subset
 

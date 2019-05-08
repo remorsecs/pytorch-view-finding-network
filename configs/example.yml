@@ -1,9 +1,9 @@
 ---
 checkpoint:
-  root_dir: 'ckpt/exp02'
-  prefix: 'exp02'
+  root_dir: 'ckpt/exp01'
+  prefix: 'exp01'
 
-weight: 'ckpt/exp02/exp02_AlexNet_6.pth'
+weight: 'ckpt/exp01/exp01_AlexNet_15.pth'
 
 device: 'cuda:0'  # 'cuda:0', 'cuda:1', ... or 'cpu'
 
@@ -14,7 +14,7 @@ model:
 
 train:
   num_epochs: 15
-  viz: True
+  viz: False
 
   optimizer:
     name: 'Adam'
@@ -33,7 +33,7 @@ train:
     shuffle: False
 
 validation:
-  viz: True
+  viz: False
 
   dataset:
     name: 'FlickrPro'
@@ -47,10 +47,10 @@ validation:
 
 evaluate:
   FCDB:
-    root_dir: '../FCDB'
+    root_dir: '../datasets/FCDB'
     download: False
 
   ICDB:
-    root_dir: '../ICDB'
-    download: False
+    root_dir: '../datasets/ICDB'
+    download: True
 ...

@@ -75,8 +75,8 @@ class ConfigParser:
         data_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((self.input_dim, self.input_dim)),
-            # transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.01, contrast=0.05),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.01, contrast=0.05),
             transforms.ToTensor(),
         ])
 
@@ -100,5 +100,5 @@ class ConfigParser:
     def parse_FCDB(self):
         return FCDB(**self.configs['evaluate']['FCDB'])
 
-    def parse_ICDB(self):
-        return ICDB(**self.configs['evaluate']['ICDB'])
+    def parse_ICDB(self, subset_selector):
+        return ICDB(subset=subset_selector, **self.configs['evaluate']['ICDB'])

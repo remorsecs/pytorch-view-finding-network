@@ -94,7 +94,9 @@ def main():
 
     testsets = [
         configs.parse_FCDB(),
-        # configs.parse_ICDB(),
+        configs.parse_ICDB(subset_selector=1),
+        configs.parse_ICDB(subset_selector=2),
+        configs.parse_ICDB(subset_selector=3),
     ]
     device = configs.parse_device()
     backbone = backbones.AlexNet()
