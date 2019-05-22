@@ -16,10 +16,9 @@ from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
 from viewfinder_benchmark.utils.visualization import ColorType, plot_bbox
 
 
-def generate_crop_annos_by_sliding_window(image):
+def generate_crop_annos_by_sliding_window(image_shape):
     crop_annos = []
-    # max_width, max_height = image.size
-    max_width, max_height = image.shape[:2]
+    max_height, max_width = image_shape[0:2]
 
     for scale in range(5, 10):
         scale /= 10
@@ -40,6 +39,7 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
 
     if viz:
         vis = Visdom()
+
     data_transforms = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((224, 224)),
@@ -63,7 +63,7 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
         image = cv2.imread(filename)
         image = image[..., [2, 1, 0]]
         # image = image.convert('RGB')
-        crop_annos = generate_crop_annos_by_sliding_window(image)
+        crop_annos = generate_crop_annos_by_sliding_window(image.shape)
 
         # add ground truth
         crop_annos.append(crop)
@@ -118,9 +118,8 @@ def main():
         configs.parse_ICDB(subset_selector=3),
     ]
     device = configs.parse_device()
-    backbone = backbones.AlexNet()
+    model = configs.parse_model().to(device)
     weight = torch.load(configs.configs['weight'], map_location=lambda storage, loc: storage)
-    model = ViewFindingNet(backbone).to(device)
     model.load_state_dict(weight)
     viz = configs.configs['validation']['viz']
 
