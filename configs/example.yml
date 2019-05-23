@@ -1,15 +1,15 @@
 ---
 checkpoint:
-  root_dir: 'ckpt/exp01'
-  prefix: 'exp01'
+  root_dir: 'ckpt/exp04'
+  prefix: 'exp04'
 
-weight: 'ckpt/exp01/exp01_AlexNet_15.pth'
+weight: 'ckpt/exp04/exp04_VGG_15.pth'
 
 device: 'cuda:0'  # 'cuda:0', 'cuda:1', ... or 'cpu'
 
 model:
   backbone:
-    name: 'AlexNet'
+    name: 'VGG'
     pretrained: True
 
 train:
@@ -29,7 +29,7 @@ train:
     gulpio_dir: '../datasets/FlickrPro/train/'
 
   dataloader:
-    batch_size: 128
+    batch_size: 50
     shuffle: False
 
 validation:
@@ -41,7 +41,7 @@ validation:
     gulpio_dir: '../datasets/FlickrPro/val/'
 
   dataloader:
-    batch_size: 128
+    batch_size: 50
     shuffle: False
 
 

@@ -33,6 +33,9 @@ class ImagePairListAdapter(AbstractDatasetAdapter):
         for item in slice_data:
             try:
                 image = cv2.imread(item['filename'])
+                # TODO: check gray scale images
+                if len(image.shape) == 2:
+                    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
                 img_full = np.copy(image)
                 x, y, w, h = item['annotation']
                 img_crop = np.copy(image[y:y+h, x:x+w, :])
@@ -40,7 +43,7 @@ class ImagePairListAdapter(AbstractDatasetAdapter):
                     print(img_full.shape)
                     print(item['annotation'])
                     continue
-            except:
+            except ImageNotFound:
                 print("Failed to read {}!".format(item['filename']))
                 continue  # skip the item if image is not readable
             # Always encapsulate your data into a dict with (id, meta, frames) keys
@@ -83,6 +86,10 @@ class ImagePairDataset(Dataset):
         img, meta = self.gd[item_id]
         img_full, img_crop = img
 
+        # TODO: check RGB vs. BGR consistency
+        img_full = img_full[..., [2, 1, 0]]
+        img_crop = img_crop[..., [2, 1, 0]]
+
         if self.transforms:
             img_full = self.transforms(img_full)
             img_crop = self.transforms(img_crop)
@@ -119,8 +126,10 @@ class ImagePairVisDataset(Dataset):
         img, meta = self.gd[item_id]
         img_full, img_crop = img
 
-        img_full = cv2.cvtColor(img_full, cv2.COLOR_RGB2BGR)
-        img_crop = cv2.cvtColor(img_crop, cv2.COLOR_RGB2BGR)
+        # img_full = cv2.cvtColor(img_full, cv2.COLOR_BGR2RGB)
+        # img_crop = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGB)
+        img_full = img_full[..., [2, 1, 0]]
+        img_crop = img_crop[..., [2, 1, 0]]
 
         return img_full, img_crop
 
