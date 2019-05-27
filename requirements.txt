@@ -1,7 +1,10 @@
 torch>=1.0
+torchvision
 pytorch-ignite
+visdom
 pytest
 tqdm
+numpy
 scikit-learn
 pyyaml
 opencv-python

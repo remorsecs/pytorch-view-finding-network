@@ -4,14 +4,13 @@ import torch
 import torch.optim as optim
 import yaml
 
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import viewfinder_benchmark.network.backbones as backbones
 import viewfinder_benchmark.network.losses as losses
 import viewfinder_benchmark.network.models as models
 
-from viewfinder_benchmark.data.FlickrPro import FlickrPro
 from viewfinder_benchmark.data.FCDB import FCDB
 from viewfinder_benchmark.data.ICDB import ICDB
 from viewfinder_benchmark.data.dataset import ImagePairDataset
@@ -42,6 +41,8 @@ class ConfigParser:
         backbone_model = None
         if self.backbone_name == 'AlexNet':
             backbone_model = backbones.AlexNet
+        elif self.backbone_name == 'VGG':
+            backbone_model = backbones.VGG
 
         backbone = backbone_model(**self.configs['model']['backbone'])
         model = models.ViewFindingNet(backbone=backbone)
@@ -75,8 +76,8 @@ class ConfigParser:
         data_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize((self.input_dim, self.input_dim)),
-            # transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.01, contrast=0.05),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.01, contrast=0.05),
             transforms.ToTensor(),
         ])
 
@@ -89,8 +90,8 @@ class ConfigParser:
         print('val_size:', len(val_dataset))
 
         data_loaders = dict(
-            train=DataLoader(train_dataset, num_workers=4, **self.configs['train']['dataloader']),
-            val=DataLoader(val_dataset, num_workers=4, **self.configs['validation']['dataloader']),
+            train=DataLoader(train_dataset, num_workers=8, **self.configs['train']['dataloader']),
+            val=DataLoader(val_dataset, num_workers=8, **self.configs['validation']['dataloader']),
         )
         return data_loaders
 
@@ -100,5 +101,5 @@ class ConfigParser:
     def parse_FCDB(self):
         return FCDB(**self.configs['evaluate']['FCDB'])
 
-    def parse_ICDB(self):
-        return ICDB(**self.configs['evaluate']['ICDB'])
+    def parse_ICDB(self, subset_selector):
+        return ICDB(subset=subset_selector, **self.configs['evaluate']['ICDB'])
