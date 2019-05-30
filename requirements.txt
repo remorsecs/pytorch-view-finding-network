@@ -1,10 +1,7 @@
 torch>=1.0
-torchvision
+torchvision>=0.3
 pytorch-ignite
 visdom
-pytest
-tqdm
-numpy
 scikit-learn
 pyyaml
 opencv-python
