@@ -1,20 +1,20 @@
 ---
 checkpoint:
-  root_dir: 'ckpt/exp04'
-  prefix: 'exp04'
+  root_dir: 'ckpt/exp01'
+  prefix: 'exp01'
 
-weight: 'ckpt/exp04/exp04_VGG_15.pth'
+weight: '../ckpt/exp01/exp01_AlexNet_15.pth'
 
 device: 'cuda:0'  # 'cuda:0', 'cuda:1', ... or 'cpu'
 
 model:
   backbone:
-    name: 'VGG'
+    name: 'AlexNet'
     pretrained: True
 
 train:
   num_epochs: 15
-  viz: False
+  viz: True
 
   optimizer:
     name: 'Adam'
@@ -33,7 +33,7 @@ train:
     shuffle: False
 
 validation:
-  viz: False
+  viz: True
 
   dataset:
     name: 'FlickrPro'
@@ -48,7 +48,7 @@ validation:
 evaluate:
   FCDB:
     root_dir: '../datasets/FCDB'
-    download: False
+    download: True
 
   ICDB:
     root_dir: '../datasets/ICDB'
