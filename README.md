@@ -8,7 +8,7 @@
 - PyTorch >= 1.0
     - https://github.com/pytorch/pytorch
     - https://pytorch.org/get-started/locally/
-  - torchvision >= 0.3.0
+- torchvision >= 0.3.0
     - https://github.com/pytorch/vision
 - visdom
     - `pip install visdom`
