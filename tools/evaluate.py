@@ -106,10 +106,10 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str, help='Path to config file (.yml)', default='../configs/example.yml')
+    parser.add_argument('-c', '--config', type=str, help='Path to config file (.yml)', default='../configs/example.yml')
     args = parser.parse_args()
 
-    configs = ConfigParser(args.config_file)
+    configs = ConfigParser(args.config)
 
     testsets = [
         configs.parse_FCDB(),
