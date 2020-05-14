@@ -31,6 +31,7 @@ def main():
 
     for testset in testsets:
         evaluator = ImageCropperEvaluator(model, testset, device, data_transforms)
+        print('Evaluate on {}'.format(testset))
         print('Average overlap ratio: {:.4f}'.format(evaluator.intersection_over_union))
         print('Average boundary displacement: {:.4f}'.format(evaluator.boundary_displacement))
         print('Alpha recall: {:.4f}'.format(evaluator.alpha_recall))
