@@ -34,11 +34,8 @@ def generate_crop_annos_by_sliding_window(image_shape):
     return crop_annos
 
 
-def evaluate_on(dataset, model, device, env, viz, examples=5):
+def evaluate_on(dataset, model, device):
     print('Evaluate on {}.'.format(dataset))
-
-    if viz:
-        vis = Visdom()
 
     data_transforms = transforms.Compose([
         transforms.ToPILImage(),
@@ -87,19 +84,6 @@ def evaluate_on(dataset, model, device, env, viz, examples=5):
         idx = scores.argmax().item()
         pred.append(crop_annos[idx])
 
-        if viz and i < examples:
-            image = plot_bbox(image, crop_annos, ColorType.SLIDING_WINDOWS)
-            image = plot_bbox(image, [ground_truth[-1]], ColorType.GROUNDTRUTH)
-            image = plot_bbox(image, [crop_annos[idx]], ColorType.PREDICT)
-            image_tensor = transforms.ToTensor()(image)
-            vis.image(
-                image_tensor,
-                env=env,
-                opts=dict(
-                    title='First {} example on {}'.format(i+1, dataset)
-                )
-            )
-
     evaluator = ImageCropperEvaluator()
     evaluator.evaluate(ground_truth, pred, img_sizes)
 
@@ -121,10 +105,9 @@ def main():
     model = configs.parse_model().to(device)
     weight = torch.load(configs.configs['weight'], map_location=lambda storage, loc: storage)
     model.load_state_dict(weight)
-    viz = configs.configs['validation']['viz']
 
     for testset in testsets:
-        evaluate_on(testset, model, device, configs.configs['checkpoint']['prefix'], viz)
+        evaluate_on(testset, model, device)
 
 
 if __name__ == '__main__':
