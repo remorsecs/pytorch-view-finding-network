@@ -6,9 +6,6 @@ import pytest
 import torch
 import torch.nn as nn
 
-from tests import crop_generator
-from viewfinder_benchmark.data.evaluation import generate_crops
-
 torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
