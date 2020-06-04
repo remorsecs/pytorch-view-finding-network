@@ -1,5 +1,3 @@
-from typing import Type, TypeVar
-
 import torch
 import torch.nn as nn
 from viewfinder_benchmark.network.backbones import Backbone
