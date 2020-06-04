@@ -9,8 +9,8 @@ import yaml
 from gulpio.fileio import GulpIngestor
 from gulpio.dataset import GulpDirectory
 from gulpio.loader import DataLoader
-from viewfinder_benchmark.data.dataset import ImagePairListAdapter, ImagePairVisDataset
-from viewfinder_benchmark.data.FlickrPro import FlickrPro
+from vfn.data.dataset import ImagePairListAdapter, ImagePairVisDataset
+from vfn.data.FlickrPro import FlickrPro
 
 
 def parse_args():

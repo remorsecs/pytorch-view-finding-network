@@ -1,37 +1,17 @@
-# faster-view-finding-network
+# pytorch-view-finding-network
+
+This is a PyTorch implementation of the [view finding network](https://github.com/yiling-chen/view-finding-network) method.
 
 ## Getting Started
-
-### Prerequisites
-
-- Python 3.6
-- PyTorch >= 1.0
-    - https://github.com/pytorch/pytorch
-    - https://pytorch.org/get-started/locally/
-- torchvision >= 0.3.0
-    - https://github.com/pytorch/vision
-- visdom
-    - `pip install visdom`
-    - https://github.com/facebookresearch/visdom
-- pytorch-ignite
-    - `pip install pytorch-ignite`
-    - https://github.com/pytorch/ignite
-- GulpIO
-    - `pip install gulpio`
-    - https://github.com/TwentyBN/GulpIO
-    - **Note**: GulpIO depends on Python 3.3~3.6, you might encounter an installation error on other Python versions.
-- PyYAML
-    - `pip install PyYAML`
-    - https://github.com/yaml/pyyaml
-- opencv-python
-    - `pip install opencv-python`
 
 ### Installation
 
 ```bash
-git clone https://github.com/yiling-chen/faster-view-finding-network
+git clone https://github.com/remorsecs/pytorch-view-finding-network
 
-cd faster-view-finding-network/
+cd pytorch-view-finding-network/
+
+pip install -r requirements.txt
 
 python setup.py build develop
 ```

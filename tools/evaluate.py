@@ -2,8 +2,8 @@ import argparse
 import torch
 from torchvision.transforms import transforms
 
-from viewfinder_benchmark.config.parser import ConfigParser
-from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator, generate_crops
+from vfn.config.parser import ConfigParser
+from vfn.data.evaluation import ImageCropperEvaluator
 
 
 def main():

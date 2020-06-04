@@ -8,8 +8,8 @@ from ignite.handlers import ModelCheckpoint
 from tqdm import tqdm
 from visdom import Visdom
 
-from viewfinder_benchmark.config.parser import ConfigParser
-from viewfinder_benchmark.utils.visualization import plot_bbox
+from vfn.config.parser import ConfigParser
+from vfn.utils.visualization import plot_bbox
 
 
 class Trainer(object):

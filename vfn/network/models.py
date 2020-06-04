@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from viewfinder_benchmark.network.backbones import Backbone
+from vfn.network.backbones import Backbone
 
 
 class ViewFindingNet(nn.Module):

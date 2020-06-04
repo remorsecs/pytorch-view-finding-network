@@ -7,13 +7,13 @@ import yaml
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import viewfinder_benchmark.network.backbones as backbones
-import viewfinder_benchmark.network.losses as losses
-import viewfinder_benchmark.network.models as models
+import vfn.network.backbones as backbones
+import vfn.network.losses as losses
+import vfn.network.models as models
 
-from viewfinder_benchmark.data.FCDB import FCDB
-from viewfinder_benchmark.data.ICDB import ICDB
-from viewfinder_benchmark.data.dataset import ImagePairDataset
+from vfn.data.FCDB import FCDB
+from vfn.data.ICDB import ICDB
+from vfn.data.dataset import ImagePairDataset
 
 
 class ConfigParser:

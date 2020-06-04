@@ -3,8 +3,8 @@ import torch
 from torchvision.transforms import transforms as T
 
 from tests.test_evaluation import SimpleImageCropper
-from viewfinder_benchmark.data.evaluation import ImageCropperEvaluator
-from viewfinder_benchmark.data.FCDB import FCDB
+from vfn.data.evaluation import ImageCropperEvaluator
+from vfn.data.FCDB import FCDB
 
 
 def pytest_addoption(parser):

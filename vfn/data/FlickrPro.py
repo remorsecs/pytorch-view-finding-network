@@ -6,7 +6,7 @@ import pickle
 
 from torch.utils.data import Dataset
 from tqdm import trange
-from viewfinder_benchmark.data.image_downloader import ImageDownloader
+from vfn.data.image_downloader import ImageDownloader
 
 
 class FlickrPro(Dataset):
