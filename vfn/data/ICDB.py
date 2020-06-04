@@ -28,7 +28,6 @@ class ICDB(Dataset):
 
         self.img_list, self.img_sizes, self.crops, self.category = self._fetch_metadata()
         self.img_groups, self.crop_groups, self. size_groups = self._group_metadata()
-        self._check_integrity(root_dir)
 
     def __len__(self):
         return len(self.img_list)
@@ -95,9 +94,6 @@ class ICDB(Dataset):
             crop_groups[label].append(crop)
             size_groups[label].append(size)
         return img_groups, crop_groups, size_groups
-
-    def _check_integrity(self, root_dir):
-        pass
 
 
 def main():

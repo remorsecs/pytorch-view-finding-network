@@ -33,7 +33,6 @@ class ImagePairListAdapter(AbstractDatasetAdapter):
         for item in slice_data:
             try:
                 image = cv2.imread(item['filename'])
-                # TODO: check gray scale images
                 if len(image.shape) == 2:
                     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
                 img_full = np.copy(image)
@@ -86,7 +85,6 @@ class ImagePairDataset(Dataset):
         img, meta = self.gd[item_id]
         img_full, img_crop = img
 
-        # TODO: check RGB vs. BGR consistency
         img_full = img_full[..., [2, 1, 0]]
         img_crop = img_crop[..., [2, 1, 0]]
 

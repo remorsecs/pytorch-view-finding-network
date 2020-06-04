@@ -61,9 +61,6 @@ class FlickrPro(Dataset):
         # print(len(self.filenames), len(self.urls), len(self.annotations))
         print('Unpacked', len(db), 'records.')
 
-    def _check_integrity(self, root_dir):
-        pass
-
 
 if __name__ == "__main__":
     print(os.getcwd())

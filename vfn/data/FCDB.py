@@ -27,7 +27,6 @@ class FCDB(Dataset):
             self._download(root_dir)
 
         self.img_list, self.img_sizes, self.annotations = self._fetch_metadata()
-        self._check_integrity(root_dir)
 
     def get_all_items(self):
         return self.img_list, self.img_sizes, self.annotations
@@ -94,9 +93,6 @@ class FCDB(Dataset):
         print('Unpacked', len(img_list), 'records.')
 
         return img_list, img_sizes, annotations
-
-    def _check_integrity(self, root_dir):
-        pass
 
 
 def main():
